@@ -1,0 +1,34 @@
+## Build results
+bin/
+obj/
+.tmp-build/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider / JetBrains
+.idea/
+
+## VS Code
+.vscode/
+
+## Logs
+*.log
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Local configuration and secrets
+appsettings.Local.json
+*.Development.local.json
+secrets.json
+
+## Test results
+TestResults/
+coverage/
+*.trx

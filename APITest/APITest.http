@@ -1,0 +1,72 @@
+@APITest_HostAddress = http://localhost:5048
+
+GET {{APITest_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+# Iris starts a named conversation.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "咖啡推薦",
+  "message": "請推薦台北適合工作的咖啡廳"
+}
+
+###
+
+# Iris continues the cafe conversation without a conversationId.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "咖啡推薦",
+  "message": "請延續剛剛的條件，再給我三個選項"
+}
+
+###
+
+# Iris starts another named conversation.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "旅遊規劃",
+  "message": "幫我規劃三天兩夜台南行程"
+}
+
+###
+
+# Iris goes back to the cafe conversation by name.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "咖啡推薦",
+  "message": "請用表格整理剛剛推薦的咖啡廳"
+}
+
+###
+
+# Optional: start a fresh conversation with the same name.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "咖啡推薦",
+  "startNewConversation": true,
+  "message": "重新開始咖啡推薦，這次請以安靜程度優先"
+}
+
+###
+
+# Clear a conversation by conversationId.
+DELETE {{APITest_HostAddress}}/ChatBot/replace-with-returned-conversation-id
+
+###

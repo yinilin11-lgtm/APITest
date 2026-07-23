@@ -1,0 +1,131 @@
+{
+  "info": {
+    "name": "APITest",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5048"
+    },
+    {
+      "key": "conversationId",
+      "value": "replace-with-returned-conversation-id"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Weather Forecast",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/WeatherForecast",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "WeatherForecast"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Send Chat Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"iris\",\n  \"conversationName\": \"咖啡推薦\",\n  \"message\": \"請推薦台北適合工作的咖啡廳\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ChatBot",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ChatBot"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Continue Named Conversation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"iris\",\n  \"conversationName\": \"咖啡推薦\",\n  \"message\": \"請延續剛剛的條件，再給我三個選項\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ChatBot",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ChatBot"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Start New Conversation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"iris\",\n  \"conversationName\": \"旅遊規劃\",\n  \"startNewConversation\": true,\n  \"message\": \"幫我規劃三天兩夜台南行程\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ChatBot",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ChatBot"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Clear Conversation",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/ChatBot/{{conversationId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "ChatBot",
+            "{{conversationId}}"
+          ]
+        }
+      }
+    }
+  ]
+}
