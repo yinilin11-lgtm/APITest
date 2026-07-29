@@ -7,6 +7,10 @@ namespace APITest
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+            builder.Logging.AddDebug();
+
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -24,8 +28,6 @@ namespace APITest
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
