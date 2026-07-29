@@ -1,68 +1,82 @@
 @APITest_HostAddress = http://localhost:5048
 
-GET {{APITest_HostAddress}}/weatherforecast/
+# Auto route: normal chat.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "自動判斷",
+  "message": "我想點午餐，有什麼簡單建議？"
+}
+
+###
+
+# Auto route: URL reader. The normal ChatBot endpoint detects the URL.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "自動判斷",
+  "message": "請幫我整理這個網頁：https://example.com"
+}
+
+###
+
+# Auto route: search. The normal ChatBot endpoint detects that this needs recent information.
+POST {{APITest_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "自動判斷",
+  "message": "最近 iPhone 有什麼最新消息？"
+}
+
+###
+
+# Manual route: read a URL with Jina Reader, then ask Gemini to summarize it.
+POST {{APITest_HostAddress}}/ChatBot/read-url
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "網頁摘要",
+  "url": "https://example.com",
+  "question": "請用簡單中文整理這個網頁重點"
+}
+
+###
+
+# Manual route: search the web with Jina Search, then ask Gemini to answer from the results.
+POST {{APITest_HostAddress}}/ChatBot/search
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "搜尋",
+  "query": "2026 iPhone 最新消息",
+  "question": "請用簡單中文整理三個重點"
+}
+
+###
+
+# List Iris conversations.
+GET {{APITest_HostAddress}}/ChatBot/users/iris/conversations
 Accept: application/json
 
 ###
 
-# Iris starts a named conversation.
-POST {{APITest_HostAddress}}/ChatBot
-Content-Type: application/json
-
-{
-  "userId": "iris",
-  "conversationName": "咖啡推薦",
-  "message": "請推薦台北適合工作的咖啡廳"
-}
+# Show Iris current chat history.
+GET {{APITest_HostAddress}}/ChatBot/users/iris/history
+Accept: application/json
 
 ###
 
-# Iris continues the cafe conversation without a conversationId.
-POST {{APITest_HostAddress}}/ChatBot
-Content-Type: application/json
-
-{
-  "userId": "iris",
-  "conversationName": "咖啡推薦",
-  "message": "請延續剛剛的條件，再給我三個選項"
-}
-
-###
-
-# Iris starts another named conversation.
-POST {{APITest_HostAddress}}/ChatBot
-Content-Type: application/json
-
-{
-  "userId": "iris",
-  "conversationName": "旅遊規劃",
-  "message": "幫我規劃三天兩夜台南行程"
-}
-
-###
-
-# Iris goes back to the cafe conversation by name.
-POST {{APITest_HostAddress}}/ChatBot
-Content-Type: application/json
-
-{
-  "userId": "iris",
-  "conversationName": "咖啡推薦",
-  "message": "請用表格整理剛剛推薦的咖啡廳"
-}
-
-###
-
-# Optional: start a fresh conversation with the same name.
-POST {{APITest_HostAddress}}/ChatBot
-Content-Type: application/json
-
-{
-  "userId": "iris",
-  "conversationName": "咖啡推薦",
-  "startNewConversation": true,
-  "message": "重新開始咖啡推薦，這次請以安靜程度優先"
-}
+# Show Iris auto-route history by conversationName.
+GET {{APITest_HostAddress}}/ChatBot/users/iris/history?conversationName=自動判斷
+Accept: application/json
 
 ###
 
