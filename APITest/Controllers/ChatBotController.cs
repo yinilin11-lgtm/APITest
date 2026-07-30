@@ -18,7 +18,8 @@ namespace APITest.Controllers
         private const int MaxSourceCharacters = 12000;
         private static readonly Regex UrlRegex = new(@"https?://[^\s]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly object StoreLock = new();
-        private static readonly string StoreFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "chat-history.json");
+        private static readonly string StoreFilePath = Path.Combine(GetProjectRootPath(), "Data", "chat-history.json");
+        private static readonly string LegacyStoreFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "chat-history.json");
         private static readonly ConcurrentDictionary<string, List<ChatMessage>> Conversations = new();
         private static readonly ConcurrentDictionary<string, string> UserConversations = new();
         private static readonly ConcurrentDictionary<string, string> UserNamedConversations = new();
@@ -74,7 +75,7 @@ namespace APITest.Controllers
                         sourceContent);
                     reply = await CreateReply(conversationId, prompt, normalizedMessage);
                 }
-                else if (ShouldUseSearch(normalizedMessage))
+                else if (await ShouldUseSearch(normalizedMessage))
                 {
                     route = "search";
                     var searchContent = await SearchWeb(normalizedMessage);
@@ -503,7 +504,73 @@ namespace APITest.Controllers
             return new SourceItem(title, uri.ToString());
         }
 
-        private static bool ShouldUseSearch(string message)
+        private async Task<bool> ShouldUseSearch(string message)
+        {
+            try
+            {
+                return await ShouldUseSearchWithGemini(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Gemini route classification failed. Falling back to keyword route detection.");
+                return ShouldUseSearchByKeyword(message);
+            }
+        }
+
+        private async Task<bool> ShouldUseSearchWithGemini(string message)
+        {
+            var apiKey = GetGeminiApiKey();
+            var model = GetGeminiModel();
+            var client = new Client(apiKey: apiKey);
+            var config = new GenerateContentConfig
+            {
+                SystemInstruction = new Content
+                {
+                    Parts = new List<Part>
+                    {
+                        new Part
+                        {
+                            Text = "Decide whether the user's message needs current web search results. Reply with exactly one word: search or chat. Choose search for questions about current weather, news, prices, stock prices, exchange rates, schedules, recent events, availability, opening hours, or information likely to change. Choose chat for emotional support, brainstorming, writing help, general advice, explanations, or timeless knowledge."
+                        }
+                    }
+                }
+            };
+
+            var response = await client.Models.GenerateContentAsync(
+                model: model,
+                contents:
+                [
+                    new Content
+                    {
+                        Role = "user",
+                        Parts =
+                        [
+                            new Part
+                            {
+                                Text = message
+                            }
+                        ]
+                    }
+                ],
+                config: config);
+
+            var decision = NormalizeReply(response.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text ?? string.Empty)
+                .ToLowerInvariant();
+
+            if (decision == "search")
+            {
+                return true;
+            }
+
+            if (decision == "chat")
+            {
+                return false;
+            }
+
+            return ShouldUseSearchByKeyword(message);
+        }
+
+        private static bool ShouldUseSearchByKeyword(string message)
         {
             var lowerMessage = message.ToLowerInvariant();
             string[] keywords =
@@ -523,22 +590,8 @@ namespace APITest.Controllers
 
         private async Task<string> CreateReply(string conversationId, string promptMessage, string historyMessage)
         {
-            var apiKey = _configuration["Gemini:ApiKey"];
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                apiKey = System.Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-            }
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                throw new InvalidOperationException("Gemini API key is missing. Set Gemini:ApiKey or GEMINI_API_KEY.");
-            }
-
-            var model = _configuration["Gemini:Model"];
-            if (string.IsNullOrWhiteSpace(model))
-            {
-                model = "gemini-3.5-flash";
-            }
+            var apiKey = GetGeminiApiKey();
+            var model = GetGeminiModel();
 
             var history = Conversations.GetOrAdd(conversationId, _ => new List<ChatMessage>());
             var userMessage = new ChatMessage("user", historyMessage, DateTimeOffset.UtcNow);
@@ -592,6 +645,28 @@ namespace APITest.Controllers
             return trimmedReply;
         }
 
+        private string GetGeminiApiKey()
+        {
+            var apiKey = _configuration["Gemini:ApiKey"];
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                apiKey = System.Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+            }
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                throw new InvalidOperationException("Gemini API key is missing. Set Gemini:ApiKey or GEMINI_API_KEY.");
+            }
+
+            return apiKey;
+        }
+
+        private string GetGeminiModel()
+        {
+            var model = _configuration["Gemini:Model"];
+            return string.IsNullOrWhiteSpace(model) ? "gemini-3.5-flash" : model;
+        }
+
         private static string NormalizeReply(string reply)
         {
             return string.Join(' ', reply.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
@@ -600,16 +675,20 @@ namespace APITest.Controllers
         private async Task<string> ReadUrlContent(Uri uri)
         {
             var jinaReaderUrl = $"https://r.jina.ai/{uri}";
-            return await GetJinaContent(jinaReaderUrl, "Jina Reader returned empty content.");
+            return await GetJinaContent(
+                jinaReaderUrl,
+                "目前無法讀取這個網址，請確認網址是否正確，或稍後再試。");
         }
 
         private async Task<string> SearchWeb(string query)
         {
             var jinaSearchUrl = $"https://s.jina.ai/?q={Uri.EscapeDataString(query)}";
-            return await GetJinaContent(jinaSearchUrl, "Jina Search returned empty content.");
+            return await GetJinaContent(
+                jinaSearchUrl,
+                "目前搜尋服務暫時無法使用，請稍後再試。");
         }
 
-        private async Task<string> GetJinaContent(string url, string emptyMessage)
+        private async Task<string> GetJinaContent(string url, string unavailableMessage)
         {
             var jinaApiKey = _configuration["Jina:ApiKey"];
             if (string.IsNullOrWhiteSpace(jinaApiKey))
@@ -627,11 +706,23 @@ namespace APITest.Controllers
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jinaApiKey);
             }
 
-            var content = await httpClient.GetStringAsync(url);
+            string content;
+            try
+            {
+                content = await httpClient.GetStringAsync(url);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new InvalidOperationException(unavailableMessage, ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                throw new InvalidOperationException(unavailableMessage, ex);
+            }
 
             if (string.IsNullOrWhiteSpace(content))
             {
-                throw new InvalidOperationException(emptyMessage);
+                throw new InvalidOperationException(unavailableMessage);
             }
 
             return content.Trim();
@@ -678,14 +769,15 @@ namespace APITest.Controllers
 
         private static void LoadChatStore()
         {
-            if (!System.IO.File.Exists(StoreFilePath))
+            var storeFilePath = GetReadableStoreFilePath();
+            if (storeFilePath is null)
             {
                 return;
             }
 
             lock (StoreLock)
             {
-                var json = System.IO.File.ReadAllText(StoreFilePath);
+                var json = System.IO.File.ReadAllText(storeFilePath);
                 var store = JsonSerializer.Deserialize<ChatStoreData>(json);
                 if (store is null)
                 {
@@ -706,7 +798,38 @@ namespace APITest.Controllers
                 {
                     UserNamedConversations[namedConversation.Key] = namedConversation.Value;
                 }
+
+                if (!string.Equals(storeFilePath, StoreFilePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    SaveChatStore();
+                }
             }
+        }
+
+        private static string? GetReadableStoreFilePath()
+        {
+            if (System.IO.File.Exists(StoreFilePath))
+            {
+                return StoreFilePath;
+            }
+
+            return System.IO.File.Exists(LegacyStoreFilePath) ? LegacyStoreFilePath : null;
+        }
+
+        private static string GetProjectRootPath()
+        {
+            var directory = new DirectoryInfo(AppContext.BaseDirectory);
+            while (directory is not null)
+            {
+                if (System.IO.File.Exists(Path.Combine(directory.FullName, "APITest.csproj")))
+                {
+                    return directory.FullName;
+                }
+
+                directory = directory.Parent;
+            }
+
+            return Directory.GetCurrentDirectory();
         }
 
         private static void SaveChatStore()
