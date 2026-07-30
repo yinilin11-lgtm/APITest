@@ -231,6 +231,23 @@ namespace APITest.Controllers
             }
         }
 
+        [HttpGet("health", Name = "GetChatBotHealth")]
+        public ActionResult<HealthResponse> Health()
+        {
+            return Ok(new HealthResponse
+            {
+                Server = "ok",
+                GeminiKeyConfigured = IsConfigured("Gemini:ApiKey", "GEMINI_API_KEY"),
+                JinaKeyConfigured = IsConfigured("Jina:ApiKey", "JINA_API_KEY"),
+                GeminiModel = GetGeminiModel(),
+                HistoryStorePath = StoreFilePath,
+                HistoryStoreReady = Directory.Exists(Path.GetDirectoryName(StoreFilePath)!) ||
+                    Directory.Exists(GetProjectRootPath()),
+                ConversationCount = Conversations.Count,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        }
+
         [HttpGet("users/{userId}/conversations", Name = "GetUserConversations")]
         public ActionResult<IEnumerable<ConversationSummary>> GetUserConversations(string userId)
         {
@@ -667,6 +684,12 @@ namespace APITest.Controllers
             return string.IsNullOrWhiteSpace(model) ? "gemini-3.5-flash" : model;
         }
 
+        private bool IsConfigured(string configurationKey, string environmentVariableName)
+        {
+            return !string.IsNullOrWhiteSpace(_configuration[configurationKey]) ||
+                !string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable(environmentVariableName));
+        }
+
         private static string NormalizeReply(string reply)
         {
             return string.Join(' ', reply.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
@@ -1001,6 +1024,25 @@ namespace APITest.Controllers
         public int MessageCount { get; set; }
 
         public List<ChatMessageItem> Messages { get; set; } = [];
+    }
+
+    public class HealthResponse
+    {
+        public string Server { get; set; } = string.Empty;
+
+        public bool GeminiKeyConfigured { get; set; }
+
+        public bool JinaKeyConfigured { get; set; }
+
+        public string GeminiModel { get; set; } = string.Empty;
+
+        public string HistoryStorePath { get; set; } = string.Empty;
+
+        public bool HistoryStoreReady { get; set; }
+
+        public int ConversationCount { get; set; }
+
+        public DateTimeOffset CreatedAt { get; set; }
     }
 
     public class ChatMessageItem
