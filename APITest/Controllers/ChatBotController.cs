@@ -316,6 +316,28 @@ namespace APITest.Controllers
             });
         }
 
+        [HttpDelete("users/{userId}/history", Name = "ClearUserChatHistory")]
+        public IActionResult DeleteUserChatHistory(string userId, [FromQuery] string? conversationName = null)
+        {
+            var normalizedUserId = NormalizeValue(userId);
+            var normalizedConversationName = NormalizeValue(conversationName);
+
+            if (string.IsNullOrWhiteSpace(normalizedUserId))
+            {
+                return BadRequest(new ErrorResponse("UserId is required.", HttpContext.TraceIdentifier));
+            }
+
+            var conversationId = GetExistingConversationId(normalizedUserId, normalizedConversationName);
+            if (conversationId is null)
+            {
+                return NotFound(new ErrorResponse("Conversation was not found.", HttpContext.TraceIdentifier));
+            }
+
+            Conversations.TryRemove(conversationId, out _);
+            RemoveConversationReferences(conversationId);
+            return NoContent();
+        }
+
         [HttpDelete("{conversationId}", Name = "ClearChatConversation")]
         public IActionResult Delete(string conversationId)
         {
