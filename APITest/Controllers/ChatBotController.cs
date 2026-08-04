@@ -248,6 +248,33 @@ namespace APITest.Controllers
             });
         }
 
+        [HttpGet("conversations", Name = "GetAllConversations")]
+        public ActionResult<IEnumerable<ConversationListItem>> GetAllConversations()
+        {
+            var namedConversations = UserNamedConversations
+                .Select(pair => new
+                {
+                    Key = ParseNamedConversationKey(pair.Key),
+                    ConversationId = pair.Value
+                })
+                .Select(item => CreateConversationListItem(
+                    item.Key.UserId,
+                    item.Key.ConversationName,
+                    item.ConversationId));
+
+            var currentUserConversations = UserConversations
+                .Where(pair => !HasNamedConversation(pair.Key, pair.Value))
+                .Select(pair => CreateConversationListItem(pair.Key, null, pair.Value));
+
+            var conversations = namedConversations
+                .Concat(currentUserConversations)
+                .OrderBy(item => item.UserId)
+                .ThenBy(item => item.ConversationName)
+                .ToList();
+
+            return Ok(conversations);
+        }
+
         [HttpGet("users/{userId}/conversations", Name = "GetUserConversations")]
         public ActionResult<IEnumerable<ConversationSummary>> GetUserConversations(string userId)
         {
@@ -317,7 +344,7 @@ namespace APITest.Controllers
         }
 
         [HttpDelete("users/{userId}/history", Name = "ClearUserChatHistory")]
-        public IActionResult DeleteUserChatHistory(string userId, [FromQuery] string? conversationName = null)
+        public ActionResult<DeleteConversationResponse> DeleteUserChatHistory(string userId, [FromQuery] string? conversationName = null)
         {
             var normalizedUserId = NormalizeValue(userId);
             var normalizedConversationName = NormalizeValue(conversationName);
@@ -335,15 +362,27 @@ namespace APITest.Controllers
 
             Conversations.TryRemove(conversationId, out _);
             RemoveConversationReferences(conversationId);
-            return NoContent();
+            return Ok(new DeleteConversationResponse
+            {
+                Message = "Conversation deleted successfully.",
+                UserId = normalizedUserId,
+                ConversationName = normalizedConversationName,
+                ConversationId = conversationId,
+                DeletedAt = DateTimeOffset.UtcNow
+            });
         }
 
         [HttpDelete("{conversationId}", Name = "ClearChatConversation")]
-        public IActionResult Delete(string conversationId)
+        public ActionResult<DeleteConversationResponse> Delete(string conversationId)
         {
             Conversations.TryRemove(conversationId, out _);
             RemoveConversationReferences(conversationId);
-            return NoContent();
+            return Ok(new DeleteConversationResponse
+            {
+                Message = "Conversation deleted successfully.",
+                ConversationId = conversationId,
+                DeletedAt = DateTimeOffset.UtcNow
+            });
         }
 
         private static string GetConversationId(string? requestedConversationId, string? userId, string? conversationName, bool startNewConversation)
@@ -434,6 +473,46 @@ namespace APITest.Controllers
                     UpdatedAt = lastMessage?.CreatedAt
                 };
             }
+        }
+
+        private static ConversationListItem CreateConversationListItem(string userId, string? conversationName, string conversationId)
+        {
+            Conversations.TryGetValue(conversationId, out var history);
+
+            if (history is null)
+            {
+                return new ConversationListItem
+                {
+                    UserId = userId,
+                    ConversationName = conversationName,
+                    ConversationId = conversationId
+                };
+            }
+
+            lock (history)
+            {
+                var lastMessage = history.LastOrDefault();
+                return new ConversationListItem
+                {
+                    UserId = userId,
+                    ConversationName = conversationName,
+                    ConversationId = conversationId,
+                    MessageCount = history.Count,
+                    LastRole = lastMessage?.Role,
+                    LastMessage = lastMessage?.Text,
+                    UpdatedAt = lastMessage?.CreatedAt
+                };
+            }
+        }
+
+        private static bool HasNamedConversation(string userId, string conversationId)
+        {
+            return UserNamedConversations.Any(pair =>
+            {
+                var key = ParseNamedConversationKey(pair.Key);
+                return key.UserId == userId.Trim().ToLowerInvariant() &&
+                    pair.Value == conversationId;
+            });
         }
 
         private static void RemoveConversationReferences(string conversationId)
@@ -1035,6 +1114,23 @@ namespace APITest.Controllers
         public DateTimeOffset? UpdatedAt { get; set; }
     }
 
+    public class ConversationListItem
+    {
+        public string UserId { get; set; } = string.Empty;
+
+        public string? ConversationName { get; set; }
+
+        public string ConversationId { get; set; } = string.Empty;
+
+        public int MessageCount { get; set; }
+
+        public string? LastRole { get; set; }
+
+        public string? LastMessage { get; set; }
+
+        public DateTimeOffset? UpdatedAt { get; set; }
+    }
+
     public class ChatHistoryResponse
     {
         public string UserId { get; set; } = string.Empty;
@@ -1065,6 +1161,19 @@ namespace APITest.Controllers
         public int ConversationCount { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
+    }
+
+    public class DeleteConversationResponse
+    {
+        public string Message { get; set; } = string.Empty;
+
+        public string? UserId { get; set; }
+
+        public string? ConversationName { get; set; }
+
+        public string ConversationId { get; set; } = string.Empty;
+
+        public DateTimeOffset DeletedAt { get; set; }
     }
 
     public class ChatMessageItem

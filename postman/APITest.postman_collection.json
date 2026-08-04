@@ -1,12 +1,20 @@
 {
   "info": {
-    "name": "APITest",
+    "name": "APITest ChatBot",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:5048"
+      "value": "https://localhost:7023"
+    },
+    {
+      "key": "userId",
+      "value": "iris"
+    },
+    {
+      "key": "conversationName",
+      "value": "搜尋"
     },
     {
       "key": "conversationId",
@@ -15,117 +23,296 @@
   ],
   "item": [
     {
-      "name": "Get Weather Forecast",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json"
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "health"
+              ]
+            }
           }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/WeatherForecast",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "WeatherForecast"
-          ]
         }
-      }
+      ]
     },
     {
-      "name": "Send Chat Message",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+      "name": "Chat",
+      "item": [
+        {
+          "name": "POST Auto Chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"自動判斷\",\n  \"message\": \"我今天心情不好，可以給我一點建議嗎\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot"
+              ]
+            }
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"userId\": \"iris\",\n  \"conversationName\": \"咖啡推薦\",\n  \"message\": \"請推薦台北適合工作的咖啡廳\"\n}"
         },
-        "url": {
-          "raw": "{{baseUrl}}/ChatBot",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "ChatBot"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Continue Named Conversation",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+        {
+          "name": "POST Auto Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"{{conversationName}}\",\n  \"message\": \"今天台北天氣適合出門嗎\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot"
+              ]
+            }
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"userId\": \"iris\",\n  \"conversationName\": \"咖啡推薦\",\n  \"message\": \"請延續剛剛的條件，再給我三個選項\"\n}"
         },
-        "url": {
-          "raw": "{{baseUrl}}/ChatBot",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "ChatBot"
-          ]
-        }
-      }
-    },
-    {
-      "name": "Start New Conversation",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+        {
+          "name": "POST Auto Read URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"網頁摘要\",\n  \"message\": \"請幫我整理這個網頁：https://example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot"
+              ]
+            }
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"userId\": \"iris\",\n  \"conversationName\": \"旅遊規劃\",\n  \"startNewConversation\": true,\n  \"message\": \"幫我規劃三天兩夜台南行程\"\n}"
-        },
-        "url": {
-          "raw": "{{baseUrl}}/ChatBot",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "ChatBot"
-          ]
         }
-      }
+      ]
     },
     {
-      "name": "Clear Conversation",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/ChatBot/{{conversationId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "ChatBot",
-            "{{conversationId}}"
-          ]
+      "name": "Search",
+      "item": [
+        {
+          "name": "POST Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"{{conversationName}}\",\n  \"query\": \"今天台北天氣\",\n  \"question\": \"請用簡單中文回答今天適不適合出門\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "search"
+              ]
+            }
+          }
         }
-      }
+      ]
+    },
+    {
+      "name": "Reader",
+      "item": [
+        {
+          "name": "POST Read URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"網頁摘要\",\n  \"url\": \"https://example.com\",\n  \"question\": \"請用簡單中文整理這個網頁重點\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/read-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "read-url"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "History",
+      "item": [
+        {
+          "name": "GET All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "conversations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/users/{{userId}}/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "users",
+                "{{userId}}",
+                "conversations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/users/{{userId}}/history?conversationName={{conversationName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "users",
+                "{{userId}}",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "conversationName",
+                  "value": "{{conversationName}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE History",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/users/{{userId}}/history?conversationName={{conversationName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "users",
+                "{{userId}}",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "conversationName",
+                  "value": "{{conversationName}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE Conversation by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ChatBot/{{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ChatBot",
+                "{{conversationId}}"
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }
