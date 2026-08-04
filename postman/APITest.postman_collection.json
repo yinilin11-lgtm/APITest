@@ -1,12 +1,12 @@
 {
   "info": {
-    "name": "APITest ChatBot",
+    "name": "APITest Toyota Advisor",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "https://localhost:7023"
+      "value": "http://localhost:5048"
     },
     {
       "key": "userId",
@@ -14,7 +14,7 @@
     },
     {
       "key": "conversationName",
-      "value": "搜尋"
+      "value": "toyota-shopping"
     },
     {
       "key": "conversationId",
@@ -50,10 +50,10 @@
       ]
     },
     {
-      "name": "Chat",
+      "name": "Toyota Chat",
       "item": [
         {
-          "name": "POST Auto Chat",
+          "name": "POST Toyota Recommendation",
           "request": {
             "method": "POST",
             "header": [
@@ -64,7 +64,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"自動判斷\",\n  \"message\": \"我今天心情不好，可以給我一點建議嗎\"\n}"
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"{{conversationName}}\",\n  \"message\": \"I commute every day and want an affordable, fuel-saving Toyota. What would you recommend?\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/ChatBot",
@@ -73,118 +73,6 @@
               ],
               "path": [
                 "ChatBot"
-              ]
-            }
-          }
-        },
-        {
-          "name": "POST Auto Search",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"{{conversationName}}\",\n  \"message\": \"今天台北天氣適合出門嗎\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/ChatBot",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ChatBot"
-              ]
-            }
-          }
-        },
-        {
-          "name": "POST Auto Read URL",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"網頁摘要\",\n  \"message\": \"請幫我整理這個網頁：https://example.com\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/ChatBot",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ChatBot"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Search",
-      "item": [
-        {
-          "name": "POST Search",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"{{conversationName}}\",\n  \"query\": \"今天台北天氣\",\n  \"question\": \"請用簡單中文回答今天適不適合出門\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/ChatBot/search",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ChatBot",
-                "search"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reader",
-      "item": [
-        {
-          "name": "POST Read URL",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"conversationName\": \"網頁摘要\",\n  \"url\": \"https://example.com\",\n  \"question\": \"請用簡單中文整理這個網頁重點\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/ChatBot/read-url",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ChatBot",
-                "read-url"
               ]
             }
           }
@@ -217,7 +105,7 @@
           }
         },
         {
-          "name": "GET Conversations",
+          "name": "GET User Conversations",
           "request": {
             "method": "GET",
             "header": [
@@ -241,7 +129,7 @@
           }
         },
         {
-          "name": "GET History",
+          "name": "GET Chat History",
           "request": {
             "method": "GET",
             "header": [
@@ -271,7 +159,7 @@
           }
         },
         {
-          "name": "DELETE History",
+          "name": "DELETE Chat History",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -291,23 +179,6 @@
                   "key": "conversationName",
                   "value": "{{conversationName}}"
                 }
-              ]
-            }
-          }
-        },
-        {
-          "name": "DELETE Conversation by ID",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/ChatBot/{{conversationId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ChatBot",
-                "{{conversationId}}"
               ]
             }
           }

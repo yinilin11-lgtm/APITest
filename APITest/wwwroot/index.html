@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toyota Advisor Demo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">T</span>
+        <div>
+          <h1>Toyota Advisor</h1>
+          <p>Recommendation demo</p>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <label class="field">
+          <span>User ID</span>
+          <input id="userId" value="iris" autocomplete="off">
+        </label>
+
+        <label class="field">
+          <span>Conversation</span>
+          <input id="conversationName" placeholder="Auto-generated after first message" autocomplete="off">
+        </label>
+
+        <button id="newChatButton" class="secondary-button" type="button">New recommendation</button>
+      </div>
+
+      <section class="conversation-panel">
+        <div class="panel-title">
+          <span>Saved chats</span>
+          <button id="refreshButton" class="icon-button" type="button" title="Refresh">Refresh</button>
+        </div>
+        <div id="conversationList" class="conversation-list"></div>
+      </section>
+    </aside>
+
+    <section class="chat-panel">
+      <header class="chat-header">
+        <div>
+          <div class="eyebrow">Toyota vehicle recommendation assistant</div>
+          <h2>Find the right Toyota for each customer</h2>
+          <p>Match customer needs to Toyota choices by budget, passengers, commute, family use, parking, fuel economy, and SUV preference.</p>
+        </div>
+        <a class="swagger-link" href="/swagger" target="_blank" rel="noreferrer">Swagger</a>
+      </header>
+
+      <section class="stats-strip" aria-label="Demo highlights">
+        <div>
+          <span>Focus</span>
+          <strong>Toyota only</strong>
+        </div>
+        <div>
+          <span>Memory</span>
+          <strong>Saved chats</strong>
+        </div>
+        <div>
+          <span>Naming</span>
+          <strong>Auto topic</strong>
+        </div>
+      </section>
+
+      <div class="suggestions" aria-label="Example questions">
+        <button type="button" data-topic="toyota-budget-commute" data-example="I commute every day and want an affordable, fuel-saving Toyota. What would you recommend?">
+          <span>Budget commuter</span>
+          <small>Affordable and fuel-saving</small>
+        </button>
+        <button type="button" data-topic="toyota-family-suv" data-example="My family has two kids and we travel on weekends. Which Toyota would fit us best?">
+          <span>Family SUV</span>
+          <small>Space for kids and trips</small>
+        </button>
+        <button type="button" data-topic="toyota-city-parking" data-example="I want a Toyota that is easy to park in the city but still comfortable. What should I look at?">
+          <span>City parking</span>
+          <small>Compact and practical</small>
+        </button>
+      </div>
+
+      <div id="messages" class="messages">
+        <article class="message assistant">
+          <p>Hello, I can help recommend Toyota models based on the customer's needs. I focus on Toyota choices, not other car brands.</p>
+        </article>
+      </div>
+
+      <form id="chatForm" class="chat-form">
+        <textarea id="messageInput" placeholder="Ask a Toyota recommendation question..." rows="2" required></textarea>
+        <button id="sendButton" type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

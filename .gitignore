@@ -27,6 +27,7 @@ Thumbs.db
 appsettings.Local.json
 *.Development.local.json
 secrets.json
+APITest/Data/chat-history.json
 
 ## Test results
 TestResults/

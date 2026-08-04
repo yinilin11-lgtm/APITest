@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -17,6 +17,14 @@ namespace APITest.Controllers
         private const int MaxMessageLength = 4000;
         private const int MaxSourceCharacters = 12000;
         private static readonly Regex UrlRegex = new(@"https?://[^\s]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly string[] NonToyotaBrandKeywords =
+        [
+            "porsche", "macan", "911", "bmw", "benz", "mercedes", "audi", "volkswagen", "vw",
+            "tesla", "honda", "nissan", "mazda", "subaru", "mitsubishi", "suzuki", "hyundai",
+            "kia", "ford", "volvo", "peugeot", "skoda", "lexgen", "納智捷", "保時捷", "賓士",
+            "奧迪", "福斯", "特斯拉", "本田", "日產", "馬自達", "速霸陸", "三菱", "鈴木",
+            "現代", "起亞", "福特", "富豪", "標緻"
+        ];
         private static readonly object StoreLock = new();
         private static readonly string StoreFilePath = Path.Combine(GetProjectRootPath(), "Data", "chat-history.json");
         private static readonly string LegacyStoreFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "chat-history.json");
@@ -59,38 +67,10 @@ namespace APITest.Controllers
             try
             {
                 var route = "chat";
-                var reply = string.Empty;
                 var sources = new List<SourceItem>();
-
-                var url = ExtractFirstUrl(normalizedMessage);
-                if (url is not null)
-                {
-                    route = "reader";
-                    var sourceContent = await ReadUrlContent(url);
-                    sources = ExtractSources(sourceContent, url.ToString());
-                    var prompt = BuildSourcePrompt(
-                        "請根據以下網頁內容回答使用者問題。如果內容裡沒有答案，請直接說網頁內容沒有提到。",
-                        $"網址：{url}",
-                        normalizedMessage,
-                        sourceContent);
-                    reply = await CreateReply(conversationId, prompt, normalizedMessage);
-                }
-                else if (await ShouldUseSearch(normalizedMessage))
-                {
-                    route = "search";
-                    var searchContent = await SearchWeb(normalizedMessage);
-                    sources = ExtractSources(searchContent);
-                    var prompt = BuildSourcePrompt(
-                        "請根據以下搜尋結果回答使用者問題。如果搜尋結果沒有足夠資訊，請直接說目前搜尋結果不足。",
-                        $"搜尋關鍵字：{normalizedMessage}",
-                        normalizedMessage,
-                        searchContent);
-                    reply = await CreateReply(conversationId, prompt, normalizedMessage);
-                }
-                else
-                {
-                    reply = await CreateReply(conversationId, normalizedMessage);
-                }
+                var reply = IsAskingAboutNonToyotaBrand(normalizedMessage)
+                    ? CreateOutOfScopeReply()
+                    : await CreateReply(conversationId, normalizedMessage);
 
                 return Ok(new ChatBotResponse
                 {
@@ -706,6 +686,17 @@ namespace APITest.Controllers
             return await CreateReply(conversationId, message, message);
         }
 
+        private static bool IsAskingAboutNonToyotaBrand(string message)
+        {
+            var lowerMessage = message.ToLowerInvariant();
+            return NonToyotaBrandKeywords.Any(lowerMessage.Contains);
+        }
+
+        private static string CreateOutOfScopeReply()
+        {
+            return "I focus on Toyota vehicle recommendations, so I do not analyze or recommend other brands. Share the customer's budget, driving needs, passenger count, and preferred vehicle type, and I can suggest suitable Toyota options.";
+        }
+
         private async Task<string> CreateReply(string conversationId, string promptMessage, string historyMessage)
         {
             var apiKey = GetGeminiApiKey();
@@ -713,7 +704,10 @@ namespace APITest.Controllers
 
             var history = Conversations.GetOrAdd(conversationId, _ => new List<ChatMessage>());
             var userMessage = new ChatMessage("user", historyMessage, DateTimeOffset.UtcNow);
-            var promptUserMessage = new ChatMessage("user", promptMessage, userMessage.CreatedAt);
+            var promptUserMessage = new ChatMessage(
+                "user",
+                $"Important: Reply in English only, even if the conversation history or user message contains Chinese.\n\n{promptMessage}",
+                userMessage.CreatedAt);
             List<ChatMessage> snapshot;
 
             lock (history)
@@ -733,7 +727,7 @@ namespace APITest.Controllers
                     {
                         new Part
                         {
-                            Text = "You are a helpful conversational chatbot. Use previous messages as context. Reply in Traditional Chinese unless the user asks for another language. Keep replies short, simple, and conversational. Use 1 to 3 short sentences by default. Reply as one paragraph without line breaks. You may occasionally add one simple emoji or emoticon when it feels natural, but do not overuse them. Do not use Markdown headings, bold text, or long numbered lists unless the user asks for details. If the user asks about real-time information, briefly explain that you are using the provided search or webpage results when available."
+                            Text = "You are a Toyota vehicle recommendation assistant for a graduate school application demo. Your main job is to help customers choose suitable Toyota vehicles. Use previous messages as context. Always reply in English. Ask follow-up questions when needed, such as budget, number of passengers, city or highway driving, parking space, fuel efficiency, family use, cargo needs, and whether the customer prefers sedan, hatchback, SUV, MPV, hybrid, or electric. Recommend Toyota models by matching needs, for example Corolla Altis for practical commuting, Corolla Cross or RAV4 for SUV needs, Yaris Cross for compact city use, Camry for comfort, Sienta for family space, or Prius/Hybrid options for fuel economy. Do not invent exact prices, promotions, inventory, loan terms, or official specs unless they are provided by official data. Do not recommend or analyze non-Toyota brands. If the user's question is unrelated to Toyota vehicle buying, choosing, owning, maintaining, or using cars, politely say you mainly help with Toyota car recommendations and car-related questions. Keep replies short, simple, friendly, and sales-consultant-like. Use 1 to 3 short sentences by default. Reply as one paragraph without line breaks. You may occasionally add one simple emoji or emoticon when it feels natural, but do not overuse them."
                         }
                     }
                 }
