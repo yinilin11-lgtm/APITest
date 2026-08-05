@@ -105,43 +105,55 @@ function createConversationName(message) {
   let topic = "shopping-advice";
 
   const wantsLuxury = hasAnyKeyword(lowerMessage, [
-    "expensive", "luxury", "premium", "high budget", "no budget", "rich", "executive",
-    "貴", "很貴", "高級", "豪華", "預算高", "沒有預算", "商務", "老闆", "有錢"
+    "expensive", "luxury", "premium", "high budget", "no budget", "rich", "executive", "chauffeur", "vip",
+    "貴", "很貴", "高級", "豪華", "預算高", "沒有預算", "商務", "老闆", "有錢", "接送", "主管", "貴賓", "舒適"
   ]);
   const wantsFamily = hasAnyKeyword(lowerMessage, [
-    "family", "kids", "kid", "children", "child", "baby",
-    "小孩", "孩子", "兒童", "孩童", "寶寶", "嬰兒", "家庭", "家人", "親子", "小朋友", "給小孩"
+    "family", "kids", "kid", "children", "child", "baby", "parents", "school pickup",
+    "小孩", "孩子", "兒童", "孩童", "寶寶", "嬰兒", "家庭", "家人", "親子", "小朋友", "給小孩", "爸媽", "接小孩", "載小孩"
   ]);
   const wantsTrip = hasAnyKeyword(lowerMessage, [
-    "trip", "travel", "weekend", "camping", "outdoor",
-    "露營", "旅行", "旅遊", "出去玩", "出遊", "週末", "假日"
+    "trip", "travel", "weekend", "camping", "outdoor", "road trip", "long distance",
+    "露營", "旅行", "旅遊", "出去玩", "出遊", "週末", "假日", "長途", "爬山", "戶外", "郊遊"
   ]);
   const wantsCommute = hasAnyKeyword(lowerMessage, [
-    "commute", "daily", "work", "school",
-    "通勤", "上班", "上課", "每天", "代步", "日常"
+    "commute", "daily", "work", "school", "errands",
+    "通勤", "上班", "上課", "每天", "代步", "日常", "買菜", "短程", "平常開"
   ]);
   const wantsParking = hasAnyKeyword(lowerMessage, [
-    "parking", "city", "compact", "small car",
-    "停車", "好停", "市區", "城市", "小台", "小車", "新手"
+    "parking", "city", "compact", "small car", "first car", "beginner",
+    "停車", "好停", "市區", "城市", "小台", "小車", "新手", "第一台車", "巷子", "窄路"
   ]);
   const wantsHybrid = hasAnyKeyword(lowerMessage, [
-    "fuel", "hybrid", "efficient", "gas mileage",
-    "省油", "油電", "油耗", "節能", "hybrid"
+    "fuel", "hybrid", "efficient", "gas mileage", "phev", "electric", "ev",
+    "省油", "油電", "油耗", "節能", "hybrid", "插電", "電動", "純電", "充電"
   ]);
   const wantsSuv = hasAnyKeyword(lowerMessage, [
-    "suv", "crossover",
-    "休旅", "休旅車", "越野"
+    "suv", "crossover", "off-road", "4wd", "awd",
+    "休旅", "休旅車", "越野", "四輪傳動", "底盤高", "空間大"
   ]);
   const wantsBudget = hasAnyKeyword(lowerMessage, [
     "budget", "affordable", "cheap", "low price",
     "預算", "便宜", "平價", "划算", "省錢"
+  ]);
+  const wantsSports = hasAnyKeyword(lowerMessage, [
+    "sports car", "sporty", "performance", "coupe", "fun to drive", "gr86", "supra", "gr yaris", "track",
+    "跑車", "性能", "雙門", "熱血", "駕駛樂趣", "開快", "帥", "操控", "賽道", "甩尾"
+  ]);
+  const wantsCommercial = hasAnyKeyword(lowerMessage, [
+    "truck", "van", "cargo", "delivery", "business", "commercial",
+    "貨車", "廂型車", "貨卡", "載貨", "送貨", "做生意", "公司用", "商用", "工具車"
   ]);
   const wantsCompare = hasAnyKeyword(lowerMessage, [
     "compare", "versus", " vs ", "difference",
     "比較", "對比", "哪個", "差別"
   ]);
 
-  if (wantsLuxury) {
+  if (wantsSports) {
+    topic = "sports-car";
+  } else if (wantsCommercial) {
+    topic = "work-vehicle";
+  } else if (wantsLuxury) {
     topic = "luxury-options";
   } else if (wantsCompare) {
     topic = "model-comparison";

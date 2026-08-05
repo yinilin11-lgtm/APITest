@@ -111,6 +111,32 @@ namespace ToyotaVehicleAdvisor.Services
                     car.BestFor.Contains("driving enjoyment", StringComparison.OrdinalIgnoreCase) ? 12 : -6;
             }
 
+            if (criteria.NeedsCommercialUse is true)
+            {
+                score += car.Category.Contains("Commercial", StringComparison.OrdinalIgnoreCase) ||
+                    car.Category.Contains("Pickup", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("TOWN ACE", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("HILUX", StringComparison.OrdinalIgnoreCase) ? 12 : -5;
+            }
+
+            if (criteria.WantsPremiumComfort is true)
+            {
+                score += car.Category.Contains("Luxury", StringComparison.OrdinalIgnoreCase) ||
+                    car.Category.Contains("Crossover Sedan", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("ALPHARD", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("CROWN", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("CAMRY", StringComparison.OrdinalIgnoreCase) ? 9 : -3;
+            }
+
+            if (criteria.NeedsOutdoorUse is true)
+            {
+                score += car.IsSuv ||
+                    car.Category.Contains("Pickup", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("RAV4", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("LAND CRUISER", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("HILUX", StringComparison.OrdinalIgnoreCase) ? 8 : -4;
+            }
+
             return score;
         }
 
@@ -141,6 +167,12 @@ namespace ToyotaVehicleAdvisor.Services
 
             public bool? WantsSportsCar { get; init; }
 
+            public bool? NeedsCommercialUse { get; init; }
+
+            public bool? WantsPremiumComfort { get; init; }
+
+            public bool? NeedsOutdoorUse { get; init; }
+
             public static ToyotaRecommendationCriteria FromMessage(string message)
             {
                 var lower = message.ToLowerInvariant();
@@ -150,12 +182,15 @@ namespace ToyotaVehicleAdvisor.Services
                 {
                     BudgetWan = TryExtractBudgetWan(message),
                     FamilySize = familySize,
-                    IsDailyCommute = ContainsAny(lower, "commute", "daily", "work", "office", "city driving"),
-                    NeedsEasyParking = ContainsAny(lower, "parking", "park", "easy to park", "compact", "city"),
-                    PrefersHybrid = ContainsAny(lower, "hybrid", "fuel", "fuel-saving", "efficient", "economy", "phev"),
-                    NeedsSuv = ContainsAny(lower, "suv", "crossover"),
-                    NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel"),
-                    WantsSportsCar = ContainsAny(lower, "sports car", "sporty", "performance", "coupe", "fun to drive", "gr86", "supra", "gr yaris", "gr ", "跑車", "性能", "雙門", "熱血", "駕駛樂趣", "開快")
+                    IsDailyCommute = ContainsAny(lower, "commute", "daily", "work", "office", "city driving", "通勤", "上班", "上課", "每天", "代步", "日常", "買菜", "短程", "平常開"),
+                    NeedsEasyParking = ContainsAny(lower, "parking", "park", "easy to park", "compact", "city", "停車", "好停", "市區", "城市", "小台", "小車", "新手", "第一台車", "巷子", "窄路"),
+                    PrefersHybrid = ContainsAny(lower, "hybrid", "fuel", "fuel-saving", "efficient", "economy", "phev", "electric", "ev", "省油", "油電", "油耗", "節能", "插電", "電動", "純電", "充電"),
+                    NeedsSuv = ContainsAny(lower, "suv", "crossover", "off-road", "4wd", "awd", "休旅", "休旅車", "越野", "四輪傳動", "底盤高", "空間大"),
+                    NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel", "小孩", "孩子", "兒童", "寶寶", "家庭", "家人", "親子", "接小孩", "載小孩"),
+                    WantsSportsCar = ContainsAny(lower, "sports car", "sporty", "performance", "coupe", "fun to drive", "gr86", "supra", "gr yaris", "gr ", "track", "跑車", "性能", "雙門", "熱血", "駕駛樂趣", "開快", "帥", "操控", "賽道", "甩尾"),
+                    NeedsCommercialUse = ContainsAny(lower, "truck", "van", "cargo", "delivery", "business", "commercial", "貨車", "廂型車", "貨卡", "載貨", "送貨", "做生意", "公司用", "商用", "工具車"),
+                    WantsPremiumComfort = ContainsAny(lower, "luxury", "premium", "executive", "chauffeur", "vip", "comfortable", "高級", "豪華", "商務", "老闆", "接送", "主管", "貴賓", "舒適"),
+                    NeedsOutdoorUse = ContainsAny(lower, "camping", "outdoor", "road trip", "long distance", "off-road", "露營", "戶外", "長途", "爬山", "旅行", "旅遊", "出遊", "越野")
                 };
             }
 
@@ -169,7 +204,10 @@ namespace ToyotaVehicleAdvisor.Services
                     $"- Hybrid or fuel-saving preference: {FormatCriteria(PrefersHybrid)}",
                     $"- SUV preference: {FormatCriteria(NeedsSuv)}",
                     $"- Family use: {FormatCriteria(NeedsFamilyUse)}",
-                    $"- Sport / performance preference: {FormatCriteria(WantsSportsCar)}"
+                    $"- Sport / performance preference: {FormatCriteria(WantsSportsCar)}",
+                    $"- Commercial / cargo use: {FormatCriteria(NeedsCommercialUse)}",
+                    $"- Premium comfort preference: {FormatCriteria(WantsPremiumComfort)}",
+                    $"- Outdoor / long-distance use: {FormatCriteria(NeedsOutdoorUse)}"
                 ]);
             }
 
