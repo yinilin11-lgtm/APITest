@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+.git/
+.vs/
+.tmp-build/
+.tmp-full-lineup-build/
+APITest/Data/*.db
+APITest/Data/*.db-shm
+APITest/Data/*.db-wal
+APITest/Data/chat-history.json
+Data/
+*.user
+*.suo
+*.log

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using APITest.Services;
 using Google.GenAI;
 using Google.GenAI.Types;
 using Microsoft.AspNetCore.Mvc;
@@ -33,16 +34,21 @@ namespace APITest.Controllers
         private static readonly ConcurrentDictionary<string, string> UserNamedConversations = new();
         private readonly IConfiguration _configuration;
         private readonly ILogger<ChatBotController> _logger;
+        private readonly ToyotaCarSearchService _toyotaCarSearchService;
 
         static ChatBotController()
         {
             LoadChatStore();
         }
 
-        public ChatBotController(IConfiguration configuration, ILogger<ChatBotController> logger)
+        public ChatBotController(
+            IConfiguration configuration,
+            ILogger<ChatBotController> logger,
+            ToyotaCarSearchService toyotaCarSearchService)
         {
             _configuration = configuration;
             _logger = logger;
+            _toyotaCarSearchService = toyotaCarSearchService;
         }
 
         [HttpPost(Name = "SendChatMessage")]
@@ -66,11 +72,31 @@ namespace APITest.Controllers
 
             try
             {
-                var route = "chat";
+                var route = "toyota-database";
                 var sources = new List<SourceItem>();
-                var reply = IsAskingAboutNonToyotaBrand(normalizedMessage)
-                    ? CreateOutOfScopeReply()
-                    : await CreateReply(conversationId, normalizedMessage);
+                var reply = CreateOutOfScopeReply();
+                var matchedCarCount = 0;
+                var recommendationCriteria = string.Empty;
+
+                if (!IsAskingAboutNonToyotaBrand(normalizedMessage))
+                {
+                    var recommendation = await _toyotaCarSearchService.SearchAsync(normalizedMessage);
+                    var matchedCars = recommendation.Cars;
+                    matchedCarCount = matchedCars.Count;
+                    sources = matchedCars
+                        .Select(car => new SourceItem(car.Model, car.SourceUrl))
+                        .DistinctBy(source => source.Url)
+                        .ToList();
+                    var databaseContext = ToyotaCarSearchService.BuildPromptContext(recommendation);
+                    var databasePrompt = BuildSourcePrompt(
+                        "Use the backend recommendation criteria and Toyota vehicle database below before answering. Explain the recommendation by matching the customer's budget, family size, commute, parking, hybrid preference, and SUV preference when those needs are detected. For exact Toyota facts such as price, fuel type, seats, engine, horsepower, and fuel economy, only use the database records. If the database does not contain a needed detail, say that the database does not list it.",
+                        "Toyota Taiwan database records",
+                        normalizedMessage,
+                        databaseContext);
+
+                    reply = await CreateReply(conversationId, databasePrompt, normalizedMessage);
+                    recommendationCriteria = recommendation.Criteria.ToPromptText();
+                }
 
                 return Ok(new ChatBotResponse
                 {
@@ -82,6 +108,8 @@ namespace APITest.Controllers
                     Intent = intent,
                     Route = route,
                     Sources = sources,
+                    MatchedCarCount = matchedCarCount,
+                    RecommendationCriteria = recommendationCriteria,
                     HistoryCount = Conversations[conversationId].Count,
                     CreatedAt = DateTimeOffset.UtcNow
                 });
@@ -220,6 +248,7 @@ namespace APITest.Controllers
                 GeminiKeyConfigured = IsConfigured("Gemini:ApiKey", "GEMINI_API_KEY"),
                 JinaKeyConfigured = IsConfigured("Jina:ApiKey", "JINA_API_KEY"),
                 GeminiModel = GetGeminiModel(),
+                ToyotaDatabasePath = Path.Combine(GetProjectRootPath(), "Data", "toyota-cars.db"),
                 HistoryStorePath = StoreFilePath,
                 HistoryStoreReady = Directory.Exists(Path.GetDirectoryName(StoreFilePath)!) ||
                     Directory.Exists(GetProjectRootPath()),
@@ -1042,6 +1071,10 @@ namespace APITest.Controllers
 
         public List<SourceItem> Sources { get; set; } = [];
 
+        public int MatchedCarCount { get; set; }
+
+        public string RecommendationCriteria { get; set; } = string.Empty;
+
         public int HistoryCount { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
@@ -1147,6 +1180,8 @@ namespace APITest.Controllers
         public bool JinaKeyConfigured { get; set; }
 
         public string GeminiModel { get; set; } = string.Empty;
+
+        public string ToyotaDatabasePath { get; set; } = string.Empty;
 
         public string HistoryStorePath { get; set; } = string.Empty;
 

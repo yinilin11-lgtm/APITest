@@ -1,9 +1,13 @@
 
 namespace APITest
 {
+    using APITest.Data;
+    using APITest.Services;
+    using Microsoft.EntityFrameworkCore;
+
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -16,10 +20,15 @@ namespace APITest
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                    "Data Source=Data/toyota-cars.db"));
+            builder.Services.AddScoped<ToyotaCarSearchService>();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
             var app = builder.Build();
+            await ToyotaSeedData.InitializeAsync(app.Services);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

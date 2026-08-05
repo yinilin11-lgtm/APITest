@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Toyota Advisor Demo</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260805-polish">
 </head>
 <body>
   <main class="app-shell">
@@ -29,6 +29,7 @@
         </label>
 
         <button id="newChatButton" class="secondary-button" type="button">New recommendation</button>
+        <button id="openDatabaseButton" class="outline-button" type="button">Open vehicle database</button>
       </div>
 
       <section class="conversation-panel">
@@ -57,42 +58,77 @@
         </div>
         <div>
           <span>Memory</span>
-          <strong>Saved chats</strong>
+          <strong>SQLite data</strong>
         </div>
         <div>
-          <span>Naming</span>
-          <strong>Auto topic</strong>
+          <span>Lineup</span>
+          <strong id="lineupCount">Loading</strong>
         </div>
       </section>
 
-      <div class="suggestions" aria-label="Example questions">
-        <button type="button" data-topic="toyota-budget-commute" data-example="I commute every day and want an affordable, fuel-saving Toyota. What would you recommend?">
-          <span>Budget commuter</span>
-          <small>Affordable and fuel-saving</small>
-        </button>
-        <button type="button" data-topic="toyota-family-suv" data-example="My family has two kids and we travel on weekends. Which Toyota would fit us best?">
-          <span>Family SUV</span>
-          <small>Space for kids and trips</small>
-        </button>
-        <button type="button" data-topic="toyota-city-parking" data-example="I want a Toyota that is easy to park in the city but still comfortable. What should I look at?">
-          <span>City parking</span>
-          <small>Compact and practical</small>
-        </button>
-      </div>
+      <nav class="view-tabs" aria-label="Main views">
+        <button id="chatTab" class="tab-button active" type="button">Chat</button>
+        <button id="databaseTab" class="tab-button database-tab" type="button">Vehicle Database</button>
+      </nav>
 
-      <div id="messages" class="messages">
-        <article class="message assistant">
-          <p>Hello, I can help recommend Toyota models based on the customer's needs. I focus on Toyota choices, not other car brands.</p>
-        </article>
-      </div>
+      <section id="chatView" class="chat-view">
+        <div class="suggestions" aria-label="Example questions">
+          <button type="button" data-topic="toyota-budget-commute" data-example="I commute every day and want an affordable, fuel-saving Toyota. What would you recommend?">
+            <span>Budget commuter</span>
+            <small>Affordable and fuel-saving</small>
+          </button>
+          <button type="button" data-topic="toyota-family-suv" data-example="My family has two kids and we travel on weekends. Which Toyota would fit us best?">
+            <span>Family SUV</span>
+            <small>Space for kids and trips</small>
+          </button>
+          <button type="button" data-topic="toyota-city-parking" data-example="I want a Toyota that is easy to park in the city but still comfortable. What should I look at?">
+            <span>City parking</span>
+            <small>Compact and practical</small>
+          </button>
+        </div>
 
-      <form id="chatForm" class="chat-form">
-        <textarea id="messageInput" placeholder="Ask a Toyota recommendation question..." rows="2" required></textarea>
-        <button id="sendButton" type="submit">Send</button>
-      </form>
+        <div id="messages" class="messages">
+          <article class="message assistant">
+            <p>Hello, I can help recommend Toyota models based on the customer's needs. I focus on Toyota choices, not other car brands.</p>
+          </article>
+        </div>
+
+        <form id="chatForm" class="chat-form">
+          <textarea id="messageInput" placeholder="Ask a Toyota recommendation question..." rows="2" required></textarea>
+          <button id="sendButton" type="submit">Send</button>
+        </form>
+      </section>
+
+      <section id="databaseView" class="database-view" hidden>
+        <div class="database-toolbar">
+          <label class="field compact-field">
+            <span>Max price</span>
+            <input id="maxPriceFilter" type="number" min="0" step="1" placeholder="100">
+          </label>
+          <button id="allCarsButton" class="filter-button active" type="button">All</button>
+          <button id="suvFilterButton" class="filter-button" type="button">SUV</button>
+          <button id="hybridFilterButton" class="filter-button" type="button">Hybrid</button>
+          <button id="refreshCarsButton" class="secondary-button" type="button">Refresh</button>
+        </div>
+        <section class="comparison-panel" aria-label="Toyota comparison tool">
+          <div class="comparison-controls">
+            <label class="field compact-field">
+              <span>Compare</span>
+              <select id="compareFirst"></select>
+            </label>
+            <label class="field compact-field">
+              <span>With</span>
+              <select id="compareSecond"></select>
+            </label>
+            <button id="compareButton" class="secondary-button" type="button">Compare</button>
+          </div>
+          <div id="comparisonResult" class="comparison-result"></div>
+        </section>
+        <div id="carsGrid" class="cars-grid"></div>
+      </section>
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20260805-polish"></script>
 </body>
 </html>

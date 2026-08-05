@@ -1,6 +1,7 @@
 const userIdInput = document.querySelector("#userId");
 const conversationNameInput = document.querySelector("#conversationName");
 const newChatButton = document.querySelector("#newChatButton");
+const openDatabaseButton = document.querySelector("#openDatabaseButton");
 const refreshButton = document.querySelector("#refreshButton");
 const conversationList = document.querySelector("#conversationList");
 const messages = document.querySelector("#messages");
@@ -8,17 +9,78 @@ const chatForm = document.querySelector("#chatForm");
 const messageInput = document.querySelector("#messageInput");
 const sendButton = document.querySelector("#sendButton");
 const exampleButtons = document.querySelectorAll("[data-example]");
+const chatTab = document.querySelector("#chatTab");
+const databaseTab = document.querySelector("#databaseTab");
+const chatView = document.querySelector("#chatView");
+const databaseView = document.querySelector("#databaseView");
+const lineupCount = document.querySelector("#lineupCount");
+const carsGrid = document.querySelector("#carsGrid");
+const maxPriceFilter = document.querySelector("#maxPriceFilter");
+const allCarsButton = document.querySelector("#allCarsButton");
+const suvFilterButton = document.querySelector("#suvFilterButton");
+const hybridFilterButton = document.querySelector("#hybridFilterButton");
+const refreshCarsButton = document.querySelector("#refreshCarsButton");
+const compareFirst = document.querySelector("#compareFirst");
+const compareSecond = document.querySelector("#compareSecond");
+const compareButton = document.querySelector("#compareButton");
+const comparisonResult = document.querySelector("#comparisonResult");
 
 let startNewConversation = false;
 let savedConversationNames = new Set();
+let activeCarFilter = "all";
+let allToyotaCars = [];
 
-function appendMessage(role, text, isError = false) {
+function appendMessage(role, text, isError = false, sources = [], criteria = "") {
   const article = document.createElement("article");
   article.className = `message ${role}${isError ? " error" : ""}`;
 
   const paragraph = document.createElement("p");
   paragraph.textContent = text;
   article.append(paragraph);
+
+  if (sources.length > 0) {
+    if (criteria) {
+      const criteriaPanel = document.createElement("div");
+      criteriaPanel.className = "criteria-panel";
+
+      const criteriaTitle = document.createElement("strong");
+      criteriaTitle.textContent = "Needs detected";
+      criteriaPanel.append(criteriaTitle);
+
+      const criteriaList = document.createElement("ul");
+      for (const line of criteria.split("\n").filter(Boolean)) {
+        const item = document.createElement("li");
+        item.textContent = line.replace(/^- /, "");
+        criteriaList.append(item);
+      }
+
+      criteriaPanel.append(criteriaList);
+      article.append(criteriaPanel);
+    }
+
+    const sourcePanel = document.createElement("div");
+    sourcePanel.className = "source-panel";
+
+    const title = document.createElement("strong");
+    title.textContent = `Vehicle data used (${sources.length})`;
+    sourcePanel.append(title);
+
+    const list = document.createElement("div");
+    list.className = "source-list";
+
+    for (const source of sources) {
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      link.textContent = source.title;
+      list.append(link);
+    }
+
+    sourcePanel.append(list);
+    article.append(sourcePanel);
+  }
+
   messages.append(article);
   messages.scrollTop = messages.scrollHeight;
 }
@@ -207,13 +269,178 @@ async function submitMessage(message) {
 
   try {
     const data = await sendChatMessage(message);
-    appendMessage("assistant", data.reply);
+    appendMessage("assistant", data.reply, false, data.sources || [], data.recommendationCriteria || "");
     await loadConversations();
   } catch (error) {
     appendMessage("assistant", error.message, true);
   } finally {
     sendButton.disabled = false;
     messageInput.focus();
+  }
+}
+
+function setActiveView(view) {
+  const isChat = view === "chat";
+  chatView.hidden = !isChat;
+  databaseView.hidden = isChat;
+  chatTab.classList.toggle("active", isChat);
+  databaseTab.classList.toggle("active", !isChat);
+
+  if (!isChat) {
+    loadCars();
+  }
+}
+
+function setActiveCarFilter(filter) {
+  activeCarFilter = filter;
+  allCarsButton.classList.toggle("active", filter === "all");
+  suvFilterButton.classList.toggle("active", filter === "suv");
+  hybridFilterButton.classList.toggle("active", filter === "hybrid");
+  loadCars();
+}
+
+async function loadCars() {
+  const params = new URLSearchParams();
+  const maxPrice = maxPriceFilter.value.trim();
+
+  if (maxPrice) {
+    params.set("maxPriceWan", maxPrice);
+  }
+
+  if (activeCarFilter === "suv") {
+    params.set("category", "SUV");
+  } else if (activeCarFilter === "hybrid") {
+    params.set("hybrid", "true");
+  }
+
+  carsGrid.innerHTML = "<p class=\"empty-state\">Loading Toyota database records...</p>";
+
+  try {
+    const response = await fetch(`/ToyotaCars${params.toString() ? `?${params}` : ""}`);
+    if (!response.ok) {
+      throw new Error("Could not load Toyota database records.");
+    }
+
+    const cars = await response.json();
+    renderCars(cars);
+  } catch (error) {
+    carsGrid.innerHTML = "";
+    const message = document.createElement("p");
+    message.className = "empty-state error-text";
+    message.textContent = error.message;
+    carsGrid.append(message);
+  }
+}
+
+async function loadLineupCount() {
+  try {
+    const response = await fetch("/ToyotaCars");
+    if (!response.ok) {
+      throw new Error("Lineup unavailable");
+    }
+
+    const cars = await response.json();
+    allToyotaCars = cars;
+    lineupCount.textContent = `${cars.length} records`;
+    renderComparisonOptions(cars);
+  } catch {
+    lineupCount.textContent = "Unavailable";
+  }
+}
+
+function renderComparisonOptions(cars) {
+  compareFirst.innerHTML = "";
+  compareSecond.innerHTML = "";
+
+  for (const car of cars) {
+    compareFirst.append(new Option(car.model, car.model));
+    compareSecond.append(new Option(car.model, car.model));
+  }
+
+  compareFirst.value = cars.find((car) => car.model.toLowerCase() === "camry")?.model || cars[0]?.model || "";
+  compareSecond.value = cars.find((car) => car.model.toLowerCase() === "rav4")?.model || cars[1]?.model || "";
+}
+
+async function compareSelectedCars() {
+  const first = compareFirst.value;
+  const second = compareSecond.value;
+
+  if (!first || !second || first === second) {
+    comparisonResult.innerHTML = "<p class=\"empty-state error-text\">Choose two different Toyota models.</p>";
+    return;
+  }
+
+  const params = new URLSearchParams();
+  params.append("models", first);
+  params.append("models", second);
+  comparisonResult.innerHTML = "<p class=\"empty-state\">Comparing Toyota models...</p>";
+
+  try {
+    const response = await fetch(`/ToyotaCars/compare?${params}`);
+    if (!response.ok) {
+      throw new Error("Could not compare these Toyota models.");
+    }
+
+    const comparison = await response.json();
+    renderComparison(comparison);
+  } catch (error) {
+    comparisonResult.innerHTML = "";
+    const message = document.createElement("p");
+    message.className = "empty-state error-text";
+    message.textContent = error.message;
+    comparisonResult.append(message);
+  }
+}
+
+function renderComparison(comparison) {
+  const rows = comparison.rows.map((row) => `
+    <tr>
+      <th>${row.label}</th>
+      <td>${row.first}</td>
+      <td>${row.second}</td>
+    </tr>
+  `).join("");
+
+  comparisonResult.innerHTML = `
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Factor</th>
+          <th>${comparison.firstModel}</th>
+          <th>${comparison.secondModel}</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderCars(cars) {
+  carsGrid.innerHTML = "";
+
+  if (cars.length === 0) {
+    carsGrid.innerHTML = "<p class=\"empty-state\">No Toyota records match this filter.</p>";
+    return;
+  }
+
+  for (const car of cars) {
+    const article = document.createElement("article");
+    article.className = "car-card";
+    article.innerHTML = `
+      <div class="car-card-header">
+        <strong>${car.model}</strong>
+        <span>${car.category}</span>
+      </div>
+      <dl>
+        <div><dt>Price</dt><dd>${car.priceRangeWan} 萬</dd></div>
+        <div><dt>Seats</dt><dd>${car.seats}</dd></div>
+        <div><dt>Fuel</dt><dd>${car.fuelType}</dd></div>
+        <div><dt>Hybrid</dt><dd>${car.hasHybridOption ? "Yes" : "No"}</dd></div>
+      </dl>
+      <p>${car.bestFor}</p>
+      <a href="${car.sourceUrl}" target="_blank" rel="noreferrer">Official source</a>
+    `;
+    carsGrid.append(article);
   }
 }
 
@@ -237,8 +464,22 @@ newChatButton.addEventListener("click", () => {
   appendMessage("assistant", "New Toyota recommendation chat started. Ask about the customer's needs, and I will name the chat automatically.");
   messageInput.focus();
 });
+openDatabaseButton.addEventListener("click", () => setActiveView("database"));
 
 refreshButton.addEventListener("click", loadConversations);
 userIdInput.addEventListener("change", loadConversations);
+chatTab.addEventListener("click", () => setActiveView("chat"));
+databaseTab.addEventListener("click", () => setActiveView("database"));
+allCarsButton.addEventListener("click", () => setActiveCarFilter("all"));
+suvFilterButton.addEventListener("click", () => setActiveCarFilter("suv"));
+hybridFilterButton.addEventListener("click", () => setActiveCarFilter("hybrid"));
+refreshCarsButton.addEventListener("click", loadCars);
+compareButton.addEventListener("click", compareSelectedCars);
+maxPriceFilter.addEventListener("input", () => {
+  window.clearTimeout(maxPriceFilter.searchTimeout);
+  maxPriceFilter.searchTimeout = window.setTimeout(loadCars, 250);
+});
 
 loadConversations();
+loadLineupCount();
+loadCars();

@@ -25,6 +25,7 @@ Expected assistant behavior:
 ## Key Features
 
 - Toyota-focused AI recommendation assistant
+- SQLite Toyota vehicle database seeded from official Toyota Taiwan public model pages
 - Gemini-powered conversational replies
 - Browser-based chat UI
 - Saved conversation list
@@ -43,7 +44,7 @@ Expected assistant behavior:
 - **AI:** Gemini API through the official `Google.GenAI` C# package
 - **Frontend:** HTML, CSS, JavaScript
 - **API Testing:** Swagger UI and Postman
-- **Storage:** Local JSON file for conversation history
+- **Storage:** SQLite for Toyota vehicle data, local JSON file for conversation history
 - **Version Control:** Git and GitHub
 
 ## System Overview
@@ -55,7 +56,11 @@ Browser UI
    v
 ASP.NET Core API
    |
-   | Gemini prompt + conversation history
+   | Query Toyota SQLite database
+   v
+Toyota vehicle records
+   |
+   | Gemini prompt + official vehicle context + conversation history
    v
 Gemini API
    |
@@ -77,7 +82,62 @@ The assistant is prompted to behave like a Toyota vehicle recommendation consult
 - Sienta for family space
 - Prius or hybrid options for fuel economy
 
-The assistant is also constrained to avoid unsupported claims. It should not invent exact pricing, promotions, inventory availability, loan terms, or official specifications unless those details are provided by trusted data.
+The assistant is also constrained to avoid unsupported claims. Exact vehicle facts such as price range, fuel type, seats, and selected specs are supplied from the local SQLite Toyota vehicle database. If the database does not include a detail, the assistant should say that the database does not list it instead of guessing.
+
+## Recommendation Logic
+
+Before calling Gemini, the backend analyzes the customer message and extracts practical buying criteria:
+
+- Budget
+- Family size or passenger count
+- Daily commute needs
+- City driving or easy parking needs
+- Hybrid or fuel-saving preference
+- SUV preference
+- Family use
+
+The API scores Toyota database records against those criteria, selects the best matching vehicles, and then passes both the structured criteria and matched vehicle records to Gemini. This makes the AI response explainable instead of simply asking the model to guess a Toyota recommendation.
+
+## Vehicle Comparison
+
+The project also includes a comparison workflow for two Toyota models. The API compares practical buying factors such as:
+
+- Price
+- Fuel or powertrain type
+- Fuel economy when listed
+- Interior category and seat count
+- Best-use positioning
+- Official data source date
+
+This supports questions like comparing Camry and RAV4 by cost, efficiency, space, and intended use.
+
+## Toyota Vehicle Database
+
+The project creates a local SQLite database at runtime:
+
+```text
+APITest/Data/toyota-cars.db
+```
+
+The database contains a `ToyotaCars` table with fields such as:
+
+- Model
+- Category
+- StartingPriceWan and MaxPriceWan
+- Seats
+- FuelType
+- HasHybridOption
+- IsSuv
+- IsElectric
+- EngineCc
+- HorsePower
+- FuelEconomyKmPerLiter
+- BestFor
+- Description
+- SourceUrl
+- SourceCheckedDate
+
+Initial seed data includes the Toyota Taiwan public lineup listed on the official offer/model page, including passenger cars, SUVs, EVs, GR performance models, MPVs, pickup, and light commercial vehicles. Vehicle data is summarized from Toyota Taiwan public model and offer pages, checked on 2026-08-05.
 
 ## Project Structure
 
@@ -85,8 +145,16 @@ The assistant is also constrained to avoid unsupported claims. It should not inv
 APITest/
   Controllers/
     ChatBotController.cs
+    ToyotaCarsController.cs
   Data/
+    AppDbContext.cs
     chat-history.json
+    toyota-cars.db
+    ToyotaSeedData.cs
+  Models/
+    ToyotaCar.cs
+  Services/
+    ToyotaCarSearchService.cs
   wwwroot/
     index.html
     styles.css
@@ -140,6 +208,33 @@ Swagger UI:
 ```text
 http://localhost:5048/swagger
 ```
+
+## Deploy a Free Web Demo on Render
+
+This project includes a `Dockerfile` and `render.yaml`, so it can be deployed as a Docker web service on Render.
+
+High-level steps:
+
+1. Push this project to GitHub.
+2. Create a Render account.
+3. In Render, choose `New` > `Blueprint`.
+4. Connect the GitHub repository.
+5. Render will read `render.yaml` and create the web service.
+6. Add the environment variable:
+
+```text
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+```
+
+Do not put the real Gemini API key in GitHub.
+
+After deployment, Render will provide a public URL similar to:
+
+```text
+https://toyota-advisor-demo.onrender.com
+```
+
+Free Render services may sleep when inactive, so the first request after a pause can take longer to load.
 
 ## Demo Flow
 
@@ -199,6 +294,28 @@ Example:
 }
 ```
 
+### Toyota Vehicle Database
+
+Lists Toyota records from the local SQLite database.
+
+```http
+GET /ToyotaCars
+```
+
+Optional filters:
+
+```text
+GET /ToyotaCars?maxPriceWan=100
+GET /ToyotaCars?category=SUV
+GET /ToyotaCars?hybrid=true
+```
+
+### Toyota Vehicle Comparison
+
+```http
+GET /ToyotaCars/compare?models=CAMRY&models=RAV4
+```
+
 ### List User Conversations
 
 ```http
@@ -256,13 +373,14 @@ http://localhost:5048
 - API keys are not stored in GitHub.
 - Local chat history is saved in `APITest/Data/chat-history.json`.
 - `APITest/Data/chat-history.json` is ignored by Git.
+- Local Toyota seed data is saved in `APITest/Data/toyota-cars.db`.
 - If the project is cloned on another computer, the Gemini API key must be configured again.
 - The health check endpoint does not call Gemini, so it does not use API quota.
 
 ## Future Improvements
 
 - Deploy the app to a public cloud URL
-- Replace local JSON history with a database
+- Replace local JSON conversation history with database-backed user history
 - Add authentication for multiple users
-- Add official Toyota model data instead of relying only on model knowledge
+- Expand Toyota model data with more official specifications and scheduled refreshes
 - Add screenshots or a short demo video for portfolio presentation

@@ -2,6 +2,7 @@
 bin/
 obj/
 .tmp-build/
+.tmp-full-lineup-build/
 
 ## Visual Studio
 .vs/
@@ -28,6 +29,12 @@ appsettings.Local.json
 *.Development.local.json
 secrets.json
 APITest/Data/chat-history.json
+APITest/Data/*.db
+APITest/Data/*.db-shm
+APITest/Data/*.db-wal
+Data/*.db
+Data/*.db-shm
+Data/*.db-wal
 
 ## Test results
 TestResults/
