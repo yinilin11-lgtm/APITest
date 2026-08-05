@@ -30,6 +30,7 @@ Expected assistant behavior:
 - Browser-based chat UI
 - Saved conversation list
 - Auto-generated conversation names
+- Anonymous per-browser visitor ID for demo chat separation
 - Chat history lookup
 - Saved chat deletion
 - Toyota-only brand guardrail
@@ -371,6 +372,8 @@ http://localhost:5048
 ## Security Notes
 
 - API keys are not stored in GitHub.
+- The browser UI uses an anonymous visitor ID stored in `localStorage` to separate demo chat history per browser.
+- This is suitable for a portfolio demo, but it is not a replacement for real authentication.
 - Local chat history is saved in `APITest/Data/chat-history.json`.
 - `APITest/Data/chat-history.json` is ignored by Git.
 - Local Toyota seed data is saved in `APITest/Data/toyota-cars.db`.

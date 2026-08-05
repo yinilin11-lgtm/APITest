@@ -1,4 +1,4 @@
-const userIdInput = document.querySelector("#userId");
+const visitorLabel = document.querySelector("#visitorLabel");
 const conversationNameInput = document.querySelector("#conversationName");
 const newChatButton = document.querySelector("#newChatButton");
 const openDatabaseButton = document.querySelector("#openDatabaseButton");
@@ -29,6 +29,7 @@ let startNewConversation = false;
 let savedConversationNames = new Set();
 let activeCarFilter = "all";
 let allToyotaCars = [];
+const visitorId = getOrCreateVisitorId();
 
 function appendMessage(role, text, isError = false, sources = [], criteria = "") {
   const article = document.createElement("article");
@@ -86,7 +87,23 @@ function appendMessage(role, text, isError = false, sources = [], criteria = "")
 }
 
 function getUserId() {
-  return userIdInput.value.trim() || "iris";
+  return visitorId;
+}
+
+function getOrCreateVisitorId() {
+  const storageKey = "toyotaAdvisorVisitorId";
+  const existingId = window.localStorage.getItem(storageKey);
+
+  if (existingId) {
+    return existingId;
+  }
+
+  const randomPart = crypto.randomUUID
+    ? crypto.randomUUID().slice(0, 8)
+    : Math.random().toString(16).slice(2, 10);
+  const newId = `visitor-${randomPart}`;
+  window.localStorage.setItem(storageKey, newId);
+  return newId;
 }
 
 function getConversationName() {
@@ -467,7 +484,6 @@ newChatButton.addEventListener("click", () => {
 openDatabaseButton.addEventListener("click", () => setActiveView("database"));
 
 refreshButton.addEventListener("click", loadConversations);
-userIdInput.addEventListener("change", loadConversations);
 chatTab.addEventListener("click", () => setActiveView("chat"));
 databaseTab.addEventListener("click", () => setActiveView("database"));
 allCarsButton.addEventListener("click", () => setActiveCarFilter("all"));
@@ -480,6 +496,7 @@ maxPriceFilter.addEventListener("input", () => {
   maxPriceFilter.searchTimeout = window.setTimeout(loadCars, 250);
 });
 
+visitorLabel.textContent = visitorId;
 loadConversations();
 loadLineupCount();
 loadCars();

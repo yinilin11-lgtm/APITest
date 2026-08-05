@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Toyota Advisor Demo</title>
-  <link rel="stylesheet" href="styles.css?v=20260805-polish">
+  <link rel="stylesheet" href="styles.css?v=20260805-anonymous-session">
 </head>
 <body>
   <main class="app-shell">
@@ -18,10 +18,10 @@
       </div>
 
       <div class="sidebar-card">
-        <label class="field">
-          <span>User ID</span>
-          <input id="userId" value="iris" autocomplete="off">
-        </label>
+        <div class="session-badge">
+          <span>Private browser session</span>
+          <strong id="visitorLabel">Loading</strong>
+        </div>
 
         <label class="field">
           <span>Conversation</span>
@@ -129,6 +129,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260805-polish"></script>
+  <script src="app.js?v=20260805-anonymous-session"></script>
 </body>
 </html>
