@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+ï»¿using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -22,9 +22,9 @@ namespace ToyotaVehicleAdvisor.Controllers
         [
             "porsche", "macan", "911", "bmw", "benz", "mercedes", "audi", "volkswagen", "vw",
             "tesla", "honda", "nissan", "mazda", "subaru", "mitsubishi", "suzuki", "hyundai",
-            "kia", "ford", "volvo", "peugeot", "skoda", "lexgen", "¯Ç´¼±¶", "«O®É±¶", "»«¤h",
-            "¶ø­}", "ºÖ´µ", "¯S´µ©Ô", "¥»¥Ğ", "¤é²£", "°¨¦Û¹F", "³tÅQ³°", "¤TµÙ", "¹a¤ì",
-            "²{¥N", "°_¨È", "ºÖ¯S", "´I»¨", "¼Ğ½o"
+            "kia", "ford", "volvo", "peugeot", "skoda", "lexgen", "ç´æ™ºæ·", "ä¿æ™‚æ·", "è³“å£«",
+            "å¥§è¿ª", "ç¦æ–¯", "ç‰¹æ–¯æ‹‰", "æœ¬ç”°", "æ—¥ç”¢", "é¦¬è‡ªé”", "é€Ÿéœ¸é™¸", "ä¸‰è±", "éˆ´æœ¨",
+            "ç¾ä»£", "èµ·äº", "ç¦ç‰¹", "å¯Œè±ª", "æ¨™ç·»"
         ];
         private static readonly object StoreLock = new();
         private static readonly string StoreFilePath = Path.Combine(GetProjectRootPath(), "Data", "chat-history.json");
@@ -94,7 +94,15 @@ namespace ToyotaVehicleAdvisor.Controllers
                         normalizedMessage,
                         databaseContext);
 
-                    reply = await CreateReply(conversationId, databasePrompt, normalizedMessage);
+                                        try
+                    {
+                        reply = await CreateReply(conversationId, databasePrompt, normalizedMessage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Gemini reply failed. Returning database fallback recommendation. TraceId: {TraceId}", HttpContext.TraceIdentifier);
+                        reply = CreateDatabaseFallbackReply(matchedCars);
+                    }
                     recommendationCriteria = recommendation.Criteria.ToPromptText();
                 }
 
@@ -141,7 +149,7 @@ namespace ToyotaVehicleAdvisor.Controllers
             }
 
             var question = string.IsNullOrWhiteSpace(request.Question)
-                ? "½Ğ¥ÎÂ²³æªº¤è¦¡¾ã²z³o­Óºô­¶­«ÂI¡C"
+                ? "è«‹ç”¨ç°¡å–®çš„æ–¹å¼æ•´ç†é€™å€‹ç¶²é é‡é»ã€‚"
                 : request.Question.Trim();
             var userId = NormalizeValue(request.UserId);
             var conversationName = NormalizeValue(request.ConversationName);
@@ -152,11 +160,11 @@ namespace ToyotaVehicleAdvisor.Controllers
                 var sourceContent = await ReadUrlContent(uri);
                 var sources = ExtractSources(sourceContent, uri.ToString());
                 var prompt = BuildSourcePrompt(
-                    "½Ğ®Ú¾Ú¥H¤Uºô­¶¤º®e¦^µª¨Ï¥ÎªÌ°İÃD¡C¦pªG¤º®e¸Ì¨S¦³µª®×¡A½Ğª½±µ»¡ºô­¶¤º®e¨S¦³´£¨ì¡C",
-                    $"ºô§}¡G{uri}",
+                    "è«‹æ ¹æ“šä»¥ä¸‹ç¶²é å…§å®¹å›ç­”ä½¿ç”¨è€…å•é¡Œã€‚å¦‚æœå…§å®¹è£¡æ²’æœ‰ç­”æ¡ˆï¼Œè«‹ç›´æ¥èªªç¶²é å…§å®¹æ²’æœ‰æåˆ°ã€‚",
+                    $"ç¶²å€ï¼š{uri}",
                     question,
                     sourceContent);
-                var userMessage = $"½Ğ®Ú¾Ú³o­Óºô§}¦^µª¡G{uri}\n°İÃD¡G{question}";
+                var userMessage = $"è«‹æ ¹æ“šé€™å€‹ç¶²å€å›ç­”ï¼š{uri}\nå•é¡Œï¼š{question}";
                 var reply = await CreateReply(conversationId, prompt, userMessage);
 
                 return Ok(new ReadUrlResponse
@@ -195,7 +203,7 @@ namespace ToyotaVehicleAdvisor.Controllers
 
             var query = request.Query.Trim();
             var question = string.IsNullOrWhiteSpace(request.Question)
-                ? "½Ğ®Ú¾Ú·j´Mµ²ªG¥ÎÂ²³æ¤¤¤å¦^µª¡C"
+                ? "è«‹æ ¹æ“šæœå°‹çµæœç”¨ç°¡å–®ä¸­æ–‡å›ç­”ã€‚"
                 : request.Question.Trim();
             var userId = NormalizeValue(request.UserId);
             var conversationName = NormalizeValue(request.ConversationName);
@@ -206,11 +214,11 @@ namespace ToyotaVehicleAdvisor.Controllers
                 var searchContent = await SearchWeb(query);
                 var sources = ExtractSources(searchContent);
                 var prompt = BuildSourcePrompt(
-                    "½Ğ®Ú¾Ú¥H¤U·j´Mµ²ªG¦^µª¨Ï¥ÎªÌ°İÃD¡C¦pªG·j´Mµ²ªG¨S¦³¨¬°÷¸ê°T¡A½Ğª½±µ»¡¥Ø«e·j´Mµ²ªG¤£¨¬¡C",
-                    $"·j´MÃöÁä¦r¡G{query}",
+                    "è«‹æ ¹æ“šä»¥ä¸‹æœå°‹çµæœå›ç­”ä½¿ç”¨è€…å•é¡Œã€‚å¦‚æœæœå°‹çµæœæ²’æœ‰è¶³å¤ è³‡è¨Šï¼Œè«‹ç›´æ¥èªªç›®å‰æœå°‹çµæœä¸è¶³ã€‚",
+                    $"æœå°‹é—œéµå­—ï¼š{query}",
                     question,
                     searchContent);
-                var userMessage = $"½Ğ·j´M¨Ã¦^µª¡G{query}\n°İÃD¡G{question}";
+                var userMessage = $"è«‹æœå°‹ä¸¦å›ç­”ï¼š{query}\nå•é¡Œï¼š{question}";
                 var reply = await CreateReply(conversationId, prompt, userMessage);
 
                 return Ok(new SearchResponse
@@ -567,24 +575,24 @@ namespace ToyotaVehicleAdvisor.Controllers
 
             if (lowerMessage.Contains("hello") ||
                 lowerMessage.Contains("hi") ||
-                lowerMessage.Contains("§A¦n") ||
-                lowerMessage.Contains("«¢Åo"))
+                lowerMessage.Contains("ä½ å¥½") ||
+                lowerMessage.Contains("å“ˆå›‰"))
             {
                 return "Greeting";
             }
 
             if (lowerMessage.Contains("help") ||
-                lowerMessage.Contains("À°") ||
-                lowerMessage.Contains("¨ó§U"))
+                lowerMessage.Contains("å¹«") ||
+                lowerMessage.Contains("å”åŠ©"))
             {
                 return "Help";
             }
 
             if (lowerMessage.Contains("?") ||
-                lowerMessage.Contains("¡H") ||
-                lowerMessage.Contains("¤°»ò") ||
-                lowerMessage.Contains("¦p¦ó") ||
-                lowerMessage.Contains("«ç»ò"))
+                lowerMessage.Contains("ï¼Ÿ") ||
+                lowerMessage.Contains("ä»€éº¼") ||
+                lowerMessage.Contains("å¦‚ä½•") ||
+                lowerMessage.Contains("æ€éº¼"))
             {
                 return "Question";
             }
@@ -600,7 +608,7 @@ namespace ToyotaVehicleAdvisor.Controllers
                 return null;
             }
 
-            var url = match.Value.TrimEnd('.', ',', ';', '¡A', '¡C', '¡F');
+            var url = match.Value.TrimEnd('.', ',', ';', 'ï¼Œ', 'ã€‚', 'ï¼›');
             return Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri : null;
         }
 
@@ -702,8 +710,8 @@ namespace ToyotaVehicleAdvisor.Controllers
             var lowerMessage = message.ToLowerInvariant();
             string[] keywords =
             [
-                "¤µ¤Ñ", "¤µ¤é", "²{¦b", "¥Ø«e", "³Ìªñ", "³Ì·s", "·s»D", "§Y®É",
-                "¤Ñ®ğ", "ªÑ»ù", "¶×²v", "»ù®æ", "±Æ¦æ", "®ø®§",
+                "ä»Šå¤©", "ä»Šæ—¥", "ç¾åœ¨", "ç›®å‰", "æœ€è¿‘", "æœ€æ–°", "æ–°è", "å³æ™‚",
+                "å¤©æ°£", "è‚¡åƒ¹", "åŒ¯ç‡", "åƒ¹æ ¼", "æ’è¡Œ", "æ¶ˆæ¯",
                 "today", "latest", "recent", "news", "weather", "price"
             ];
 
@@ -724,6 +732,26 @@ namespace ToyotaVehicleAdvisor.Controllers
         private static string CreateOutOfScopeReply()
         {
             return "I focus on Toyota vehicle recommendations, so I do not analyze or recommend other brands. Share the customer's budget, driving needs, passenger count, and preferred vehicle type, and I can suggest suitable Toyota options.";
+        }
+
+        private static string CreateDatabaseFallbackReply(IReadOnlyList<Models.ToyotaCar> matchedCars)
+        {
+            if (matchedCars.Count == 0)
+            {
+                return "The Toyota database did not find a matching vehicle yet. Please share budget, passenger count, driving needs, parking needs, and whether you prefer SUV or hybrid.";
+            }
+
+            var topCar = matchedCars[0];
+            var alternatives = matchedCars
+                .Skip(1)
+                .Take(2)
+                .Select(car => car.Model)
+                .ToList();
+            var alternativeText = alternatives.Count > 0
+                ? $" Other options to compare are {string.Join(", ", alternatives)}."
+                : string.Empty;
+
+            return $"Based on the Toyota vehicle database, {topCar.Model} is the strongest match. It is a {topCar.Category} with {topCar.Seats} seats, {topCar.FuelType}, and a listed price range of NT${topCar.StartingPriceWan:0.0}-{topCar.MaxPriceWan:0.0} wan. It fits: {topCar.BestFor}.{alternativeText}";
         }
 
         private async Task<string> CreateReply(string conversationId, string promptMessage, string historyMessage)
@@ -805,7 +833,7 @@ namespace ToyotaVehicleAdvisor.Controllers
         private string GetGeminiModel()
         {
             var model = _configuration["Gemini:Model"];
-            return string.IsNullOrWhiteSpace(model) ? "gemini-3.5-flash" : model;
+            return string.IsNullOrWhiteSpace(model) ? "gemini-3.6-flash" : model;
         }
 
         private bool IsConfigured(string configurationKey, string environmentVariableName)
@@ -824,7 +852,7 @@ namespace ToyotaVehicleAdvisor.Controllers
             var jinaReaderUrl = $"https://r.jina.ai/{uri}";
             return await GetJinaContent(
                 jinaReaderUrl,
-                "¥Ø«eµLªkÅª¨ú³o­Óºô§}¡A½Ğ½T»{ºô§}¬O§_¥¿½T¡A©Îµy«á¦A¸Õ¡C");
+                "ç›®å‰ç„¡æ³•è®€å–é€™å€‹ç¶²å€ï¼Œè«‹ç¢ºèªç¶²å€æ˜¯å¦æ­£ç¢ºï¼Œæˆ–ç¨å¾Œå†è©¦ã€‚");
         }
 
         private async Task<string> SearchWeb(string query)
@@ -832,7 +860,7 @@ namespace ToyotaVehicleAdvisor.Controllers
             var jinaSearchUrl = $"https://s.jina.ai/?q={Uri.EscapeDataString(query)}";
             return await GetJinaContent(
                 jinaSearchUrl,
-                "¥Ø«e·j´MªA°È¼È®ÉµLªk¨Ï¥Î¡A½Ğµy«á¦A¸Õ¡C");
+                "ç›®å‰æœå°‹æœå‹™æš«æ™‚ç„¡æ³•ä½¿ç”¨ï¼Œè«‹ç¨å¾Œå†è©¦ã€‚");
         }
 
         private async Task<string> GetJinaContent(string url, string unavailableMessage)
@@ -884,8 +912,8 @@ namespace ToyotaVehicleAdvisor.Controllers
             var prompt = new StringBuilder();
             prompt.AppendLine(instruction);
             prompt.AppendLine(sourceLabel);
-            prompt.AppendLine($"°İÃD¡G{question}");
-            prompt.AppendLine("¸ê®Æ¤º®e¡G");
+            prompt.AppendLine($"å•é¡Œï¼š{question}");
+            prompt.AppendLine("è³‡æ–™å…§å®¹ï¼š");
             prompt.AppendLine(trimmedSource);
 
             return prompt.ToString();
@@ -1231,3 +1259,4 @@ namespace ToyotaVehicleAdvisor.Controllers
         public Dictionary<string, string> UserNamedConversations { get; set; } = [];
     }
 }
+
