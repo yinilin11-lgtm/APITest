@@ -92,6 +92,23 @@ function getConversationName() {
   return conversationNameInput.value.trim();
 }
 
+async function readJsonResponse(response, fallbackMessage) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    await response.text().catch(() => "");
+    throw new Error(fallbackMessage);
+  }
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || fallbackMessage);
+  }
+
+  return data;
+}
+
 function createUniqueName(baseName) {
   let name = baseName;
   let count = 2;
@@ -158,10 +175,10 @@ async function sendChatMessage(message) {
     })
   });
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "The message could not be sent. Please try again.");
-  }
+  const data = await readJsonResponse(
+    response,
+    "The service is waking up or redeploying. Please wait a moment and try again."
+  );
 
   startNewConversation = false;
   if (data.conversationName) {
@@ -180,7 +197,7 @@ async function loadHistory(conversationName) {
     return;
   }
 
-  const data = await response.json();
+  const data = await readJsonResponse(response, "This saved chat could not be loaded.");
   messages.innerHTML = "";
 
   for (const item of data.messages) {
@@ -196,8 +213,7 @@ async function deleteConversation(conversationName) {
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || "This saved chat could not be deleted.");
+    await readJsonResponse(response, "This saved chat could not be deleted.");
   }
 }
 async function renameConversation(oldName, newName) {
@@ -213,10 +229,7 @@ async function renameConversation(oldName, newName) {
     })
   });
 
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || "This saved chat could not be renamed.");
-  }
+  await readJsonResponse(response, "This saved chat could not be renamed.");
 }
 
 async function loadConversations() {
@@ -229,7 +242,7 @@ async function loadConversations() {
     return;
   }
 
-  const conversations = await response.json();
+  const conversations = await readJsonResponse(response, "Could not load saved chats.");
   savedConversationNames = new Set(
     conversations
       .map((conversation) => conversation.conversationName || "")
@@ -370,11 +383,7 @@ async function loadCars() {
 
   try {
     const response = await fetch(`/ToyotaCars${params.toString() ? `?${params}` : ""}`);
-    if (!response.ok) {
-      throw new Error("Could not load Toyota database records.");
-    }
-
-    const cars = await response.json();
+    const cars = await readJsonResponse(response, "Could not load Toyota database records.");
     renderCars(cars);
   } catch (error) {
     carsGrid.innerHTML = "";
@@ -388,11 +397,7 @@ async function loadCars() {
 async function loadLineupCount() {
   try {
     const response = await fetch("/ToyotaCars");
-    if (!response.ok) {
-      throw new Error("Lineup unavailable");
-    }
-
-    const cars = await response.json();
+    const cars = await readJsonResponse(response, "Lineup unavailable");
     allToyotaCars = cars;
     lineupCount.textContent = `${cars.length} records`;
     renderComparisonOptions(cars);
@@ -430,11 +435,7 @@ async function compareSelectedCars() {
 
   try {
     const response = await fetch(`/ToyotaCars/compare?${params}`);
-    if (!response.ok) {
-      throw new Error("Could not compare these Toyota models.");
-    }
-
-    const comparison = await response.json();
+    const comparison = await readJsonResponse(response, "Could not compare these Toyota models.");
     renderComparison(comparison);
   } catch (error) {
     comparisonResult.innerHTML = "";
