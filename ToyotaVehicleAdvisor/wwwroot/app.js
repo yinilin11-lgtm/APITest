@@ -31,38 +31,13 @@ let activeCarFilter = "all";
 let allToyotaCars = [];
 const visitorId = getOrCreateVisitorId();
 
-function appendMessage(role, text, isError = false, sources = []) {
+function appendMessage(role, text, isError = false) {
   const article = document.createElement("article");
   article.className = `message ${role}${isError ? " error" : ""}`;
 
   const paragraph = document.createElement("p");
   paragraph.textContent = text;
   article.append(paragraph);
-
-  if (sources.length > 0) {
-
-    const sourcePanel = document.createElement("div");
-    sourcePanel.className = "source-panel";
-
-    const title = document.createElement("strong");
-    title.textContent = `Vehicle data used (${sources.length})`;
-    sourcePanel.append(title);
-
-    const list = document.createElement("div");
-    list.className = "source-list";
-
-    for (const source of sources) {
-      const link = document.createElement("a");
-      link.href = source.url;
-      link.target = "_blank";
-      link.rel = "noreferrer";
-      link.textContent = source.title;
-      list.append(link);
-    }
-
-    sourcePanel.append(list);
-    article.append(sourcePanel);
-  }
 
   messages.append(article);
   messages.scrollTop = messages.scrollHeight;
@@ -368,7 +343,7 @@ async function submitMessage(message) {
 
   try {
     const data = await sendChatMessage(message);
-    appendMessage("assistant", data.reply, false, data.sources || []);
+    appendMessage("assistant", data.reply);
     await loadConversations();
   } catch (error) {
     appendMessage("assistant", error.message, true);
