@@ -7,6 +7,8 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      - key: DOTNET_USE_POLLING_FILE_WATCHER
+        value: "true"
       - key: Gemini__Model
         value: gemini-3.5-flash
       - key: GEMINI_API_KEY
