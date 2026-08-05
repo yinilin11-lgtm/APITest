@@ -103,6 +103,14 @@ namespace ToyotaVehicleAdvisor.Services
                 score += car.IsSuv || car.Category.Contains("MPV") || car.Seats >= 5 ? 4 : -5;
             }
 
+            if (criteria.WantsSportsCar is true)
+            {
+                score += car.Category.Contains("Sports", StringComparison.OrdinalIgnoreCase) ||
+                    car.Model.Contains("GR", StringComparison.OrdinalIgnoreCase) ||
+                    car.BestFor.Contains("performance", StringComparison.OrdinalIgnoreCase) ||
+                    car.BestFor.Contains("driving enjoyment", StringComparison.OrdinalIgnoreCase) ? 12 : -6;
+            }
+
             return score;
         }
 
@@ -131,6 +139,8 @@ namespace ToyotaVehicleAdvisor.Services
 
             public bool? NeedsFamilyUse { get; init; }
 
+            public bool? WantsSportsCar { get; init; }
+
             public static ToyotaRecommendationCriteria FromMessage(string message)
             {
                 var lower = message.ToLowerInvariant();
@@ -144,7 +154,8 @@ namespace ToyotaVehicleAdvisor.Services
                     NeedsEasyParking = ContainsAny(lower, "parking", "park", "easy to park", "compact", "city"),
                     PrefersHybrid = ContainsAny(lower, "hybrid", "fuel", "fuel-saving", "efficient", "economy", "phev"),
                     NeedsSuv = ContainsAny(lower, "suv", "crossover"),
-                    NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel")
+                    NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel"),
+                    WantsSportsCar = ContainsAny(lower, "sports car", "sporty", "performance", "coupe", "fun to drive", "gr86", "supra", "gr yaris", "gr ", "跑車", "性能", "雙門", "熱血", "駕駛樂趣", "開快")
                 };
             }
 
@@ -157,7 +168,8 @@ namespace ToyotaVehicleAdvisor.Services
                     $"- Easy parking / city use: {FormatCriteria(NeedsEasyParking)}",
                     $"- Hybrid or fuel-saving preference: {FormatCriteria(PrefersHybrid)}",
                     $"- SUV preference: {FormatCriteria(NeedsSuv)}",
-                    $"- Family use: {FormatCriteria(NeedsFamilyUse)}"
+                    $"- Family use: {FormatCriteria(NeedsFamilyUse)}",
+                    $"- Sport / performance preference: {FormatCriteria(WantsSportsCar)}"
                 ]);
             }
 
