@@ -106,9 +106,17 @@ function createUniqueName(baseName) {
 
 function createConversationName(message) {
   const lowerMessage = message.toLowerCase();
-  let topic = "general";
+  let topic = "shopping-advice";
 
-  if ((lowerMessage.includes("family") || lowerMessage.includes("kids") || lowerMessage.includes("child")) &&
+  if (lowerMessage.includes("expensive") ||
+      lowerMessage.includes("luxury") ||
+      lowerMessage.includes("premium") ||
+      lowerMessage.includes("high budget") ||
+      lowerMessage.includes("no budget") ||
+      lowerMessage.includes("rich") ||
+      lowerMessage.includes("executive")) {
+    topic = "luxury-options";
+  } else if ((lowerMessage.includes("family") || lowerMessage.includes("kids") || lowerMessage.includes("child")) &&
       (lowerMessage.includes("suv") || lowerMessage.includes("trip") || lowerMessage.includes("travel"))) {
     topic = "family-suv";
   } else if ((lowerMessage.includes("commute") || lowerMessage.includes("work") || lowerMessage.includes("daily")) &&
@@ -126,9 +134,11 @@ function createConversationName(message) {
     topic = "budget-choice";
   } else if (lowerMessage.includes("commute") || lowerMessage.includes("daily") || lowerMessage.includes("work")) {
     topic = "daily-commute";
+  } else if (lowerMessage.includes("compare") || lowerMessage.includes("versus") || lowerMessage.includes(" vs ")) {
+    topic = "model-comparison";
   }
 
-  return createUniqueName(`toyota-${topic}`);
+  return createUniqueName(topic);
 }
 
 async function sendChatMessage(message) {
@@ -226,16 +236,14 @@ async function loadConversations() {
       .filter(Boolean)
       .map((name) => name.toLowerCase())
   );
-  const toyotaConversations = conversations.filter((conversation) =>
-    (conversation.conversationName || "").toLowerCase().startsWith("toyota")
-  );
+  const savedChats = conversations.filter((conversation) => conversation.conversationName);
 
-  if (toyotaConversations.length === 0) {
+  if (savedChats.length === 0) {
     conversationList.textContent = "No saved chats yet.";
     return;
   }
 
-  for (const conversation of toyotaConversations) {
+  for (const conversation of savedChats) {
     const item = document.createElement("div");
     item.className = "conversation-item";
     item.innerHTML = `
@@ -496,7 +504,7 @@ chatForm.addEventListener("submit", async (event) => {
 
 for (const button of exampleButtons) {
   button.addEventListener("click", () => {
-    conversationNameInput.value = createUniqueName(button.dataset.topic || "toyota-general");
+    conversationNameInput.value = createUniqueName(button.dataset.topic || "shopping-advice");
     messageInput.value = button.dataset.example || "";
     messageInput.focus();
   });
