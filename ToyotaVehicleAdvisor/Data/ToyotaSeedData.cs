@@ -1,7 +1,7 @@
-using APITest.Models;
+using ToyotaVehicleAdvisor.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace APITest.Data
+namespace ToyotaVehicleAdvisor.Data
 {
     public static class ToyotaSeedData
     {

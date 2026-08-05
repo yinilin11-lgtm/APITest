@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace APITest.Controllers
+namespace ToyotaVehicleAdvisor.Controllers
 {
     [ApiController]
     [Route("[controller]")]

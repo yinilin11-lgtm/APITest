@@ -1,8 +1,8 @@
-using APITest.Data;
+﻿using ToyotaVehicleAdvisor.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace APITest.Controllers
+namespace ToyotaVehicleAdvisor.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -85,7 +85,7 @@ namespace APITest.Controllers
                 SecondModel = second.Model,
                 Rows =
                 [
-                    CompareRow("Price", $"{first.StartingPriceWan:0.0}-{first.MaxPriceWan:0.0} 萬", $"{second.StartingPriceWan:0.0}-{second.MaxPriceWan:0.0} 萬"),
+                    CompareRow("Price", $"{first.StartingPriceWan:0.0}-{first.MaxPriceWan:0.0} wan", $"{second.StartingPriceWan:0.0}-{second.MaxPriceWan:0.0} wan"),
                     CompareRow("Fuel / Powertrain", first.FuelType, second.FuelType),
                     CompareRow("Fuel Economy", FormatFuelEconomy(first.FuelEconomyKmPerLiter), FormatFuelEconomy(second.FuelEconomyKmPerLiter)),
                     CompareRow("Interior / Seats", $"{first.Seats} seats, {first.Category}", $"{second.Seats} seats, {second.Category}"),
@@ -152,3 +152,5 @@ namespace APITest.Controllers
         public string Second { get; set; } = string.Empty;
     }
 }
+
+

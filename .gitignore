@@ -3,6 +3,7 @@ bin/
 obj/
 .tmp-build/
 .tmp-full-lineup-build/
+.tmp-rename-build/
 
 ## Visual Studio
 .vs/
@@ -28,10 +29,10 @@ Thumbs.db
 appsettings.Local.json
 *.Development.local.json
 secrets.json
-APITest/Data/chat-history.json
-APITest/Data/*.db
-APITest/Data/*.db-shm
-APITest/Data/*.db-wal
+ToyotaVehicleAdvisor/Data/chat-history.json
+ToyotaVehicleAdvisor/Data/*.db
+ToyotaVehicleAdvisor/Data/*.db-shm
+ToyotaVehicleAdvisor/Data/*.db-wal
 Data/*.db
 Data/*.db-shm
 Data/*.db-wal

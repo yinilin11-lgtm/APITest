@@ -119,7 +119,7 @@ This supports questions like comparing Camry and RAV4 by cost, efficiency, space
 The project creates a local SQLite database at runtime:
 
 ```text
-APITest/Data/toyota-cars.db
+ToyotaVehicleAdvisor/Data/toyota-cars.db
 ```
 
 The database contains a `ToyotaCars` table with fields such as:
@@ -145,7 +145,7 @@ Initial seed data includes the Toyota Taiwan public lineup listed on the officia
 ## Project Structure
 
 ```text
-APITest/
+ToyotaVehicleAdvisor/
   Controllers/
     ChatBotController.cs
     ToyotaCarsController.cs
@@ -163,7 +163,7 @@ APITest/
     styles.css
     app.js
 postman/
-  APITest.postman_collection.json
+  ToyotaVehicleAdvisor.postman_collection.json
 README.md
 ```
 
@@ -181,7 +181,7 @@ Do not commit real API keys to GitHub. Use User Secrets or environment variables
 Using User Secrets:
 
 ```powershell
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" --project APITest
+dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" --project ToyotaVehicleAdvisor
 ```
 
 Or using an environment variable:
@@ -192,12 +192,12 @@ setx GEMINI_API_KEY "YOUR_GEMINI_API_KEY"
 
 ## Run the Project
 
-Open `APITest.slnx` in Visual Studio and run the `http` profile.
+Open `ToyotaVehicleAdvisor.slnx` in Visual Studio and run the `http` profile.
 
 You can also run from the command line:
 
 ```powershell
-dotnet run --project APITest/APITest.csproj --launch-profile http
+dotnet run --project ToyotaVehicleAdvisor/ToyotaVehicleAdvisor.csproj --launch-profile http
 ```
 
 Local app:
@@ -362,7 +362,7 @@ DELETE http://localhost:5048/ChatBot/users/iris/history?conversationName=toyota-
 Import this collection into Postman:
 
 ```text
-postman/APITest.postman_collection.json
+postman/ToyotaVehicleAdvisor.postman_collection.json
 ```
 
 The default `baseUrl` is:
@@ -376,9 +376,9 @@ http://localhost:5048
 - API keys are not stored in GitHub.
 - The browser UI uses an anonymous visitor ID stored in `localStorage` to separate demo chat history per browser.
 - This is suitable for a portfolio demo, but it is not a replacement for real authentication.
-- Local chat history is saved in `APITest/Data/chat-history.json`.
-- `APITest/Data/chat-history.json` is ignored by Git.
-- Local Toyota seed data is saved in `APITest/Data/toyota-cars.db`.
+- Local chat history is saved in `ToyotaVehicleAdvisor/Data/chat-history.json`.
+- `ToyotaVehicleAdvisor/Data/chat-history.json` is ignored by Git.
+- Local Toyota seed data is saved in `ToyotaVehicleAdvisor/Data/toyota-cars.db`.
 - If the project is cloned on another computer, the Gemini API key must be configured again.
 - The health check endpoint does not call Gemini, so it does not use API quota.
 

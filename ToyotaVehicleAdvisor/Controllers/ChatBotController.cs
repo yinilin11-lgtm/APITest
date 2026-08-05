@@ -1,14 +1,14 @@
-ï»¿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using APITest.Services;
+using ToyotaVehicleAdvisor.Services;
 using Google.GenAI;
 using Google.GenAI.Types;
 using Microsoft.AspNetCore.Mvc;
 
-namespace APITest.Controllers
+namespace ToyotaVehicleAdvisor.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -22,9 +22,9 @@ namespace APITest.Controllers
         [
             "porsche", "macan", "911", "bmw", "benz", "mercedes", "audi", "volkswagen", "vw",
             "tesla", "honda", "nissan", "mazda", "subaru", "mitsubishi", "suzuki", "hyundai",
-            "kia", "ford", "volvo", "peugeot", "skoda", "lexgen", "ç´æ™ºæ·", "ä¿æ™‚æ·", "è³“å£«",
-            "å¥§è¿ª", "ç¦æ–¯", "ç‰¹æ–¯æ‹‰", "æœ¬ç”°", "æ—¥ç”¢", "é¦¬è‡ªé”", "é€Ÿéœ¸é™¸", "ä¸‰è±", "éˆ´æœ¨",
-            "ç¾ä»£", "èµ·äº", "ç¦ç‰¹", "å¯Œè±ª", "æ¨™ç·»"
+            "kia", "ford", "volvo", "peugeot", "skoda", "lexgen", "¯Ç´¼±¶", "«O®É±¶", "»«¤h",
+            "¶ø­}", "ºÖ´µ", "¯S´µ©Ô", "¥»¥Ğ", "¤é²£", "°¨¦Û¹F", "³tÅQ³°", "¤TµÙ", "¹a¤ì",
+            "²{¥N", "°_¨È", "ºÖ¯S", "´I»¨", "¼Ğ½o"
         ];
         private static readonly object StoreLock = new();
         private static readonly string StoreFilePath = Path.Combine(GetProjectRootPath(), "Data", "chat-history.json");
@@ -141,7 +141,7 @@ namespace APITest.Controllers
             }
 
             var question = string.IsNullOrWhiteSpace(request.Question)
-                ? "è«‹ç”¨ç°¡å–®çš„æ–¹å¼æ•´ç†é€™å€‹ç¶²é é‡é»ã€‚"
+                ? "½Ğ¥ÎÂ²³æªº¤è¦¡¾ã²z³o­Óºô­¶­«ÂI¡C"
                 : request.Question.Trim();
             var userId = NormalizeValue(request.UserId);
             var conversationName = NormalizeValue(request.ConversationName);
@@ -152,11 +152,11 @@ namespace APITest.Controllers
                 var sourceContent = await ReadUrlContent(uri);
                 var sources = ExtractSources(sourceContent, uri.ToString());
                 var prompt = BuildSourcePrompt(
-                    "è«‹æ ¹æ“šä»¥ä¸‹ç¶²é å…§å®¹å›ç­”ä½¿ç”¨è€…å•é¡Œã€‚å¦‚æœå…§å®¹è£¡æ²’æœ‰ç­”æ¡ˆï¼Œè«‹ç›´æ¥èªªç¶²é å…§å®¹æ²’æœ‰æåˆ°ã€‚",
-                    $"ç¶²å€ï¼š{uri}",
+                    "½Ğ®Ú¾Ú¥H¤Uºô­¶¤º®e¦^µª¨Ï¥ÎªÌ°İÃD¡C¦pªG¤º®e¸Ì¨S¦³µª®×¡A½Ğª½±µ»¡ºô­¶¤º®e¨S¦³´£¨ì¡C",
+                    $"ºô§}¡G{uri}",
                     question,
                     sourceContent);
-                var userMessage = $"è«‹æ ¹æ“šé€™å€‹ç¶²å€å›ç­”ï¼š{uri}\nå•é¡Œï¼š{question}";
+                var userMessage = $"½Ğ®Ú¾Ú³o­Óºô§}¦^µª¡G{uri}\n°İÃD¡G{question}";
                 var reply = await CreateReply(conversationId, prompt, userMessage);
 
                 return Ok(new ReadUrlResponse
@@ -195,7 +195,7 @@ namespace APITest.Controllers
 
             var query = request.Query.Trim();
             var question = string.IsNullOrWhiteSpace(request.Question)
-                ? "è«‹æ ¹æ“šæœå°‹çµæœç”¨ç°¡å–®ä¸­æ–‡å›ç­”ã€‚"
+                ? "½Ğ®Ú¾Ú·j´Mµ²ªG¥ÎÂ²³æ¤¤¤å¦^µª¡C"
                 : request.Question.Trim();
             var userId = NormalizeValue(request.UserId);
             var conversationName = NormalizeValue(request.ConversationName);
@@ -206,11 +206,11 @@ namespace APITest.Controllers
                 var searchContent = await SearchWeb(query);
                 var sources = ExtractSources(searchContent);
                 var prompt = BuildSourcePrompt(
-                    "è«‹æ ¹æ“šä»¥ä¸‹æœå°‹çµæœå›ç­”ä½¿ç”¨è€…å•é¡Œã€‚å¦‚æœæœå°‹çµæœæ²’æœ‰è¶³å¤ è³‡è¨Šï¼Œè«‹ç›´æ¥èªªç›®å‰æœå°‹çµæœä¸è¶³ã€‚",
-                    $"æœå°‹é—œéµå­—ï¼š{query}",
+                    "½Ğ®Ú¾Ú¥H¤U·j´Mµ²ªG¦^µª¨Ï¥ÎªÌ°İÃD¡C¦pªG·j´Mµ²ªG¨S¦³¨¬°÷¸ê°T¡A½Ğª½±µ»¡¥Ø«e·j´Mµ²ªG¤£¨¬¡C",
+                    $"·j´MÃöÁä¦r¡G{query}",
                     question,
                     searchContent);
-                var userMessage = $"è«‹æœå°‹ä¸¦å›ç­”ï¼š{query}\nå•é¡Œï¼š{question}";
+                var userMessage = $"½Ğ·j´M¨Ã¦^µª¡G{query}\n°İÃD¡G{question}";
                 var reply = await CreateReply(conversationId, prompt, userMessage);
 
                 return Ok(new SearchResponse
@@ -567,24 +567,24 @@ namespace APITest.Controllers
 
             if (lowerMessage.Contains("hello") ||
                 lowerMessage.Contains("hi") ||
-                lowerMessage.Contains("ä½ å¥½") ||
-                lowerMessage.Contains("å“ˆå›‰"))
+                lowerMessage.Contains("§A¦n") ||
+                lowerMessage.Contains("«¢Åo"))
             {
                 return "Greeting";
             }
 
             if (lowerMessage.Contains("help") ||
-                lowerMessage.Contains("å¹«") ||
-                lowerMessage.Contains("å”åŠ©"))
+                lowerMessage.Contains("À°") ||
+                lowerMessage.Contains("¨ó§U"))
             {
                 return "Help";
             }
 
             if (lowerMessage.Contains("?") ||
-                lowerMessage.Contains("ï¼Ÿ") ||
-                lowerMessage.Contains("ä»€éº¼") ||
-                lowerMessage.Contains("å¦‚ä½•") ||
-                lowerMessage.Contains("æ€éº¼"))
+                lowerMessage.Contains("¡H") ||
+                lowerMessage.Contains("¤°»ò") ||
+                lowerMessage.Contains("¦p¦ó") ||
+                lowerMessage.Contains("«ç»ò"))
             {
                 return "Question";
             }
@@ -600,7 +600,7 @@ namespace APITest.Controllers
                 return null;
             }
 
-            var url = match.Value.TrimEnd('.', ',', ';', 'ï¼Œ', 'ã€‚', 'ï¼›');
+            var url = match.Value.TrimEnd('.', ',', ';', '¡A', '¡C', '¡F');
             return Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri : null;
         }
 
@@ -702,8 +702,8 @@ namespace APITest.Controllers
             var lowerMessage = message.ToLowerInvariant();
             string[] keywords =
             [
-                "ä»Šå¤©", "ä»Šæ—¥", "ç¾åœ¨", "ç›®å‰", "æœ€è¿‘", "æœ€æ–°", "æ–°è", "å³æ™‚",
-                "å¤©æ°£", "è‚¡åƒ¹", "åŒ¯ç‡", "åƒ¹æ ¼", "æ’è¡Œ", "æ¶ˆæ¯",
+                "¤µ¤Ñ", "¤µ¤é", "²{¦b", "¥Ø«e", "³Ìªñ", "³Ì·s", "·s»D", "§Y®É",
+                "¤Ñ®ğ", "ªÑ»ù", "¶×²v", "»ù®æ", "±Æ¦æ", "®ø®§",
                 "today", "latest", "recent", "news", "weather", "price"
             ];
 
@@ -824,7 +824,7 @@ namespace APITest.Controllers
             var jinaReaderUrl = $"https://r.jina.ai/{uri}";
             return await GetJinaContent(
                 jinaReaderUrl,
-                "ç›®å‰ç„¡æ³•è®€å–é€™å€‹ç¶²å€ï¼Œè«‹ç¢ºèªç¶²å€æ˜¯å¦æ­£ç¢ºï¼Œæˆ–ç¨å¾Œå†è©¦ã€‚");
+                "¥Ø«eµLªkÅª¨ú³o­Óºô§}¡A½Ğ½T»{ºô§}¬O§_¥¿½T¡A©Îµy«á¦A¸Õ¡C");
         }
 
         private async Task<string> SearchWeb(string query)
@@ -832,7 +832,7 @@ namespace APITest.Controllers
             var jinaSearchUrl = $"https://s.jina.ai/?q={Uri.EscapeDataString(query)}";
             return await GetJinaContent(
                 jinaSearchUrl,
-                "ç›®å‰æœå°‹æœå‹™æš«æ™‚ç„¡æ³•ä½¿ç”¨ï¼Œè«‹ç¨å¾Œå†è©¦ã€‚");
+                "¥Ø«e·j´MªA°È¼È®ÉµLªk¨Ï¥Î¡A½Ğµy«á¦A¸Õ¡C");
         }
 
         private async Task<string> GetJinaContent(string url, string unavailableMessage)
@@ -884,8 +884,8 @@ namespace APITest.Controllers
             var prompt = new StringBuilder();
             prompt.AppendLine(instruction);
             prompt.AppendLine(sourceLabel);
-            prompt.AppendLine($"å•é¡Œï¼š{question}");
-            prompt.AppendLine("è³‡æ–™å…§å®¹ï¼š");
+            prompt.AppendLine($"°İÃD¡G{question}");
+            prompt.AppendLine("¸ê®Æ¤º®e¡G");
             prompt.AppendLine(trimmedSource);
 
             return prompt.ToString();
@@ -968,7 +968,7 @@ namespace APITest.Controllers
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory is not null)
             {
-                if (System.IO.File.Exists(Path.Combine(directory.FullName, "APITest.csproj")))
+                if (System.IO.File.Exists(Path.Combine(directory.FullName, "ToyotaVehicleAdvisor.csproj")))
                 {
                     return directory.FullName;
                 }

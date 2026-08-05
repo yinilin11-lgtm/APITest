@@ -1,0 +1,86 @@
+@ToyotaVehicleAdvisor_HostAddress = http://localhost:5048
+
+# Auto route: normal chat.
+POST {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "?ªå??¤æ–·",
+  "message": "?‘æƒ³é»å?é¤ï??‰ä?éº¼ç°¡?®å»ºè­°ï?"
+}
+
+###
+
+# Auto route: URL reader. The normal ChatBot endpoint detects the URL.
+POST {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "?ªå??¤æ–·",
+  "message": "è«‹å¹«?‘æ•´?†é€™å€‹ç¶²?ï?https://example.com"
+}
+
+###
+
+# Auto route: search. The normal ChatBot endpoint detects that this needs recent information.
+POST {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "?ªå??¤æ–·",
+  "message": "?€è¿?iPhone ?‰ä?éº¼æ??°æ??¯ï?"
+}
+
+###
+
+# Manual route: read a URL with Jina Reader, then ask Gemini to summarize it.
+POST {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot/read-url
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "ç¶²é??˜è?",
+  "url": "https://example.com",
+  "question": "è«‹ç”¨ç°¡å–®ä¸­æ??´ç??™å€‹ç¶²?é?é»?
+}
+
+###
+
+# Manual route: search the web with Jina Search, then ask Gemini to answer from the results.
+POST {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot/search
+Content-Type: application/json
+
+{
+  "userId": "iris",
+  "conversationName": "?œå?",
+  "query": "2026 iPhone ?€?°æ???,
+  "question": "è«‹ç”¨ç°¡å–®ä¸­æ??´ç?ä¸‰å€‹é?é»?
+}
+
+###
+
+# List Iris conversations.
+GET {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot/users/iris/conversations
+Accept: application/json
+
+###
+
+# Show Iris current chat history.
+GET {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot/users/iris/history
+Accept: application/json
+
+###
+
+# Show Iris auto-route history by conversationName.
+GET {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot/users/iris/history?conversationName=?ªå??¤æ–·
+Accept: application/json
+
+###
+
+# Clear a conversation by conversationId.
+DELETE {{ToyotaVehicleAdvisor_HostAddress}}/ChatBot/replace-with-returned-conversation-id
+
+###

@@ -4,10 +4,10 @@
 .vs/
 .tmp-build/
 .tmp-full-lineup-build/
-APITest/Data/*.db
-APITest/Data/*.db-shm
-APITest/Data/*.db-wal
-APITest/Data/chat-history.json
+ToyotaVehicleAdvisor/Data/*.db
+ToyotaVehicleAdvisor/Data/*.db-shm
+ToyotaVehicleAdvisor/Data/*.db-wal
+ToyotaVehicleAdvisor/Data/chat-history.json
 Data/
 *.user
 *.suo

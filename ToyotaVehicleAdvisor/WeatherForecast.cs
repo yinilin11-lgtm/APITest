@@ -1,4 +1,4 @@
-namespace APITest
+namespace ToyotaVehicleAdvisor
 {
     public class WeatherForecast
     {

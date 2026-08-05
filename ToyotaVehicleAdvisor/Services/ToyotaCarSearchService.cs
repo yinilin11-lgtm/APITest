@@ -1,10 +1,10 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
-using APITest.Data;
-using APITest.Models;
+using ToyotaVehicleAdvisor.Data;
+using ToyotaVehicleAdvisor.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace APITest.Services
+namespace ToyotaVehicleAdvisor.Services
 {
     public class ToyotaCarSearchService(AppDbContext db)
     {
@@ -140,11 +140,11 @@ namespace APITest.Services
                 {
                     BudgetWan = TryExtractBudgetWan(message),
                     FamilySize = familySize,
-                    IsDailyCommute = ContainsAny(lower, "commute", "daily", "work", "office", "city driving", "通勤", "上班", "每天"),
-                    NeedsEasyParking = ContainsAny(lower, "parking", "park", "easy to park", "compact", "city", "停車", "好停", "市區", "城市", "小台"),
-                    PrefersHybrid = ContainsAny(lower, "hybrid", "fuel", "fuel-saving", "efficient", "economy", "phev", "油電", "省油", "油耗", "插電"),
-                    NeedsSuv = ContainsAny(lower, "suv", "crossover", "休旅", "越野", "高一點"),
-                    NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel", "家庭", "小孩", "孩子", "嬰兒", "旅行")
+                    IsDailyCommute = ContainsAny(lower, "commute", "daily", "work", "office", "city driving"),
+                    NeedsEasyParking = ContainsAny(lower, "parking", "park", "easy to park", "compact", "city"),
+                    PrefersHybrid = ContainsAny(lower, "hybrid", "fuel", "fuel-saving", "efficient", "economy", "phev"),
+                    NeedsSuv = ContainsAny(lower, "suv", "crossover"),
+                    NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel")
                 };
             }
 
@@ -178,12 +178,12 @@ namespace APITest.Services
                 }
 
                 var lower = message.ToLowerInvariant();
-                if (ContainsAny(lower, "two kids", "2 kids", "兩個小孩", "二個小孩"))
+                if (ContainsAny(lower, "two kids", "2 kids"))
                 {
                     return 4;
                 }
 
-                if (ContainsAny(lower, "one kid", "1 kid", "一個小孩"))
+                if (ContainsAny(lower, "one kid", "1 kid"))
                 {
                     return 3;
                 }

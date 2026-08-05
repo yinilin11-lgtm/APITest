@@ -1,4 +1,4 @@
-namespace APITest.Models
+namespace ToyotaVehicleAdvisor.Models
 {
     public class ToyotaCar
     {

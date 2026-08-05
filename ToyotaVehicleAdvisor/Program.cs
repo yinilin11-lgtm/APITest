@@ -1,8 +1,8 @@
 
-namespace APITest
+namespace ToyotaVehicleAdvisor
 {
-    using APITest.Data;
-    using APITest.Services;
+    using ToyotaVehicleAdvisor.Data;
+    using ToyotaVehicleAdvisor.Services;
     using Microsoft.EntityFrameworkCore;
 
     public class Program
