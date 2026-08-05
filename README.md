@@ -1,12 +1,14 @@
-# Toyota Advisor Demo
+# Toyota Vehicle Advisor
 
-Toyota Advisor Demo is an AI-powered vehicle recommendation web application built with ASP.NET Core and Gemini. The project simulates a customer-facing Toyota sales assistant that asks about user needs and recommends suitable Toyota models in English.
+Live Demo: https://toyota-vehicle-advisor.onrender.com
+
+Toyota Vehicle Advisor is an AI-powered vehicle recommendation web application built with ASP.NET Core, Gemini, and a SQLite Toyota vehicle database. The project simulates a customer-facing Toyota sales assistant that asks about user needs, compares vehicle options, and recommends suitable Toyota models in English.
 
 This project was designed as a graduate school application portfolio piece to demonstrate practical AI integration, API design, frontend implementation, conversation history management, and responsible handling of API keys.
 
 ## Demo Concept
 
-Many car shoppers do not start with a specific model in mind. They usually describe their lifestyle first: budget, commute, family size, parking space, fuel economy, or preference for an SUV. Toyota Advisor Demo turns those natural-language needs into helpful Toyota recommendations.
+Many car shoppers do not start with a specific model in mind. They usually describe their lifestyle first: budget, commute, family size, parking space, fuel economy, or preference for an SUV. Toyota Vehicle Advisor turns those natural-language needs into helpful Toyota recommendations.
 
 Example user question:
 
