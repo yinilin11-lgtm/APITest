@@ -121,38 +121,71 @@ function createUniqueName(baseName) {
   return name;
 }
 
+function hasAnyKeyword(value, keywords) {
+  return keywords.some((keyword) => value.includes(keyword));
+}
+
 function createConversationName(message) {
   const lowerMessage = message.toLowerCase();
   let topic = "shopping-advice";
 
-  if (lowerMessage.includes("expensive") ||
-      lowerMessage.includes("luxury") ||
-      lowerMessage.includes("premium") ||
-      lowerMessage.includes("high budget") ||
-      lowerMessage.includes("no budget") ||
-      lowerMessage.includes("rich") ||
-      lowerMessage.includes("executive")) {
+  const wantsLuxury = hasAnyKeyword(lowerMessage, [
+    "expensive", "luxury", "premium", "high budget", "no budget", "rich", "executive",
+    "貴", "很貴", "高級", "豪華", "預算高", "沒有預算", "商務", "老闆", "有錢"
+  ]);
+  const wantsFamily = hasAnyKeyword(lowerMessage, [
+    "family", "kids", "kid", "children", "child", "baby",
+    "小孩", "孩子", "兒童", "孩童", "寶寶", "嬰兒", "家庭", "家人", "親子", "小朋友", "給小孩"
+  ]);
+  const wantsTrip = hasAnyKeyword(lowerMessage, [
+    "trip", "travel", "weekend", "camping", "outdoor",
+    "露營", "旅行", "旅遊", "出去玩", "出遊", "週末", "假日"
+  ]);
+  const wantsCommute = hasAnyKeyword(lowerMessage, [
+    "commute", "daily", "work", "school",
+    "通勤", "上班", "上課", "每天", "代步", "日常"
+  ]);
+  const wantsParking = hasAnyKeyword(lowerMessage, [
+    "parking", "city", "compact", "small car",
+    "停車", "好停", "市區", "城市", "小台", "小車", "新手"
+  ]);
+  const wantsHybrid = hasAnyKeyword(lowerMessage, [
+    "fuel", "hybrid", "efficient", "gas mileage",
+    "省油", "油電", "油耗", "節能", "hybrid"
+  ]);
+  const wantsSuv = hasAnyKeyword(lowerMessage, [
+    "suv", "crossover",
+    "休旅", "休旅車", "越野"
+  ]);
+  const wantsBudget = hasAnyKeyword(lowerMessage, [
+    "budget", "affordable", "cheap", "low price",
+    "預算", "便宜", "平價", "划算", "省錢"
+  ]);
+  const wantsCompare = hasAnyKeyword(lowerMessage, [
+    "compare", "versus", " vs ", "difference",
+    "比較", "對比", "哪個", "差別"
+  ]);
+
+  if (wantsLuxury) {
     topic = "luxury-options";
-  } else if ((lowerMessage.includes("family") || lowerMessage.includes("kids") || lowerMessage.includes("child")) &&
-      (lowerMessage.includes("suv") || lowerMessage.includes("trip") || lowerMessage.includes("travel"))) {
-    topic = "family-suv";
-  } else if ((lowerMessage.includes("commute") || lowerMessage.includes("work") || lowerMessage.includes("daily")) &&
-      (lowerMessage.includes("fuel") || lowerMessage.includes("hybrid") || lowerMessage.includes("efficient"))) {
-    topic = "budget-commute";
-  } else if (lowerMessage.includes("parking") || lowerMessage.includes("city") || lowerMessage.includes("compact")) {
-    topic = "city-parking";
-  } else if (lowerMessage.includes("family") || lowerMessage.includes("kids") || lowerMessage.includes("child")) {
-    topic = "family-car";
-  } else if (lowerMessage.includes("suv") || lowerMessage.includes("crossover")) {
-    topic = "suv-choice";
-  } else if (lowerMessage.includes("fuel") || lowerMessage.includes("hybrid") || lowerMessage.includes("efficient")) {
-    topic = "fuel-saving";
-  } else if (lowerMessage.includes("budget") || lowerMessage.includes("affordable") || lowerMessage.includes("cheap")) {
-    topic = "budget-choice";
-  } else if (lowerMessage.includes("commute") || lowerMessage.includes("daily") || lowerMessage.includes("work")) {
-    topic = "daily-commute";
-  } else if (lowerMessage.includes("compare") || lowerMessage.includes("versus") || lowerMessage.includes(" vs ")) {
+  } else if (wantsCompare) {
     topic = "model-comparison";
+  } else if (wantsFamily && (wantsSuv || wantsTrip)) {
+    topic = "family-suv";
+  } else if (wantsFamily) {
+    topic = "family-car";
+  } else if (wantsCommute && wantsHybrid) {
+    topic = "budget-commute";
+  } else if (wantsParking) {
+    topic = "city-parking";
+  } else if (wantsSuv) {
+    topic = "suv-choice";
+  } else if (wantsHybrid) {
+    topic = "fuel-saving";
+  } else if (wantsBudget) {
+    topic = "budget-choice";
+  } else if (wantsCommute) {
+    topic = "daily-commute";
   }
 
   return createUniqueName(topic);
