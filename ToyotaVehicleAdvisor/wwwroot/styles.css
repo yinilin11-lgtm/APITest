@@ -231,14 +231,31 @@ h2 {
   background: transparent;
 }
 
-.conversation-delete {
+.conversation-actions {
+  display: flex;
+  gap: 6px;
   margin-right: 8px;
+}
+
+.conversation-rename,
+.conversation-delete {
   border: 1px solid #ffd0d3;
   border-radius: 8px;
   padding: 6px 8px;
   color: var(--primary-dark);
   background: #fff7f7;
   font-size: 12px;
+}
+
+.conversation-rename {
+  border-color: var(--line);
+  color: var(--dark);
+  background: white;
+}
+
+.conversation-rename:hover {
+  border-color: #b8c0cc;
+  background: #f8fafc;
 }
 
 .conversation-delete:hover {

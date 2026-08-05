@@ -389,6 +389,48 @@ namespace ToyotaVehicleAdvisor.Controllers
             });
         }
 
+        [HttpPatch("users/{userId}/history/name", Name = "RenameUserChatHistory")]
+        public ActionResult<RenameConversationResponse> RenameUserChatHistory(string userId, RenameConversationRequest request)
+        {
+            var normalizedUserId = NormalizeValue(userId);
+            var oldName = NormalizeValue(request.OldConversationName);
+            var newName = NormalizeValue(request.NewConversationName);
+
+            if (string.IsNullOrWhiteSpace(normalizedUserId) ||
+                string.IsNullOrWhiteSpace(oldName) ||
+                string.IsNullOrWhiteSpace(newName))
+            {
+                return BadRequest(new ErrorResponse("UserId, old conversation name, and new conversation name are required.", HttpContext.TraceIdentifier));
+            }
+
+            var oldKey = GetNamedConversationKey(normalizedUserId, oldName);
+            if (!UserNamedConversations.TryGetValue(oldKey, out var conversationId))
+            {
+                return NotFound(new ErrorResponse("Conversation was not found.", HttpContext.TraceIdentifier));
+            }
+
+            var newKey = GetNamedConversationKey(normalizedUserId, newName);
+            if (UserNamedConversations.ContainsKey(newKey))
+            {
+                return Conflict(new ErrorResponse("A conversation with the new name already exists.", HttpContext.TraceIdentifier));
+            }
+
+            UserNamedConversations.TryRemove(oldKey, out _);
+            UserNamedConversations[newKey] = conversationId;
+            UserConversations[normalizedUserId] = conversationId;
+            SaveChatStore();
+
+            return Ok(new RenameConversationResponse
+            {
+                Message = "Conversation renamed successfully.",
+                UserId = normalizedUserId,
+                OldConversationName = oldName,
+                NewConversationName = newName,
+                ConversationId = conversationId,
+                RenamedAt = DateTimeOffset.UtcNow
+            });
+        }
+
         [HttpDelete("{conversationId}", Name = "ClearChatConversation")]
         public ActionResult<DeleteConversationResponse> Delete(string conversationId)
         {
@@ -1081,6 +1123,13 @@ namespace ToyotaVehicleAdvisor.Controllers
         public string? Question { get; set; }
     }
 
+    public class RenameConversationRequest
+    {
+        public string OldConversationName { get; set; } = string.Empty;
+
+        public string NewConversationName { get; set; } = string.Empty;
+    }
+
     public class ChatBotResponse
     {
         public string? UserId { get; set; }
@@ -1231,6 +1280,21 @@ namespace ToyotaVehicleAdvisor.Controllers
         public string ConversationId { get; set; } = string.Empty;
 
         public DateTimeOffset DeletedAt { get; set; }
+    }
+
+    public class RenameConversationResponse
+    {
+        public string Message { get; set; } = string.Empty;
+
+        public string UserId { get; set; } = string.Empty;
+
+        public string OldConversationName { get; set; } = string.Empty;
+
+        public string NewConversationName { get; set; } = string.Empty;
+
+        public string ConversationId { get; set; } = string.Empty;
+
+        public DateTimeOffset RenamedAt { get; set; }
     }
 
     public class ChatMessageItem

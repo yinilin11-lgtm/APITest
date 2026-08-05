@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Toyota Advisor Demo</title>
-  <link rel="stylesheet" href="styles.css?v=20260805-anonymous-session">
+  <title>Toyota Vehicle Advisor</title>
+  <link rel="stylesheet" href="styles.css?v=20260805-chat-rename">
 </head>
 <body>
   <main class="app-shell">
@@ -12,21 +12,15 @@
       <div class="brand">
         <span class="brand-mark">T</span>
         <div>
-          <h1>Toyota Advisor</h1>
-          <p>Recommendation demo</p>
+          <h1>Toyota Vehicle Advisor</h1>`r`n          <p>Recommendation demo</p>
         </div>
       </div>
 
       <div class="sidebar-card">
         <div class="session-badge">
           <span>Private browser session</span>
-          <strong id="visitorLabel">Loading</strong>
-        </div>
-
-        <label class="field">
-          <span>Conversation</span>
-          <input id="conversationName" placeholder="Auto-generated after first message" autocomplete="off">
-        </label>
+          <strong id="visitorLabel">Ready</strong>
+        </div><input id="conversationName" type="hidden">
 
         <button id="newChatButton" class="secondary-button" type="button">New recommendation</button>
         <button id="openDatabaseButton" class="outline-button" type="button">Open vehicle database</button>
@@ -129,6 +123,7 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260805-anonymous-session"></script>
+  <script src="app.js?v=20260805-chat-rename"></script>
 </body>
 </html>
+

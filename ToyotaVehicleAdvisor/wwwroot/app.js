@@ -1,4 +1,4 @@
-const visitorLabel = document.querySelector("#visitorLabel");
+﻿const visitorLabel = document.querySelector("#visitorLabel");
 const conversationNameInput = document.querySelector("#conversationName");
 const newChatButton = document.querySelector("#newChatButton");
 const openDatabaseButton = document.querySelector("#openDatabaseButton");
@@ -31,7 +31,7 @@ let activeCarFilter = "all";
 let allToyotaCars = [];
 const visitorId = getOrCreateVisitorId();
 
-function appendMessage(role, text, isError = false, sources = [], criteria = "") {
+function appendMessage(role, text, isError = false, sources = []) {
   const article = document.createElement("article");
   article.className = `message ${role}${isError ? " error" : ""}`;
 
@@ -40,24 +40,6 @@ function appendMessage(role, text, isError = false, sources = [], criteria = "")
   article.append(paragraph);
 
   if (sources.length > 0) {
-    if (criteria) {
-      const criteriaPanel = document.createElement("div");
-      criteriaPanel.className = "criteria-panel";
-
-      const criteriaTitle = document.createElement("strong");
-      criteriaTitle.textContent = "Needs detected";
-      criteriaPanel.append(criteriaTitle);
-
-      const criteriaList = document.createElement("ul");
-      for (const line of criteria.split("\n").filter(Boolean)) {
-        const item = document.createElement("li");
-        item.textContent = line.replace(/^- /, "");
-        criteriaList.append(item);
-      }
-
-      criteriaPanel.append(criteriaList);
-      article.append(criteriaPanel);
-    }
 
     const sourcePanel = document.createElement("div");
     sourcePanel.className = "source-panel";
@@ -208,6 +190,24 @@ async function deleteConversation(conversationName) {
     throw new Error(data.error || "This saved chat could not be deleted.");
   }
 }
+async function renameConversation(oldName, newName) {
+  const userId = encodeURIComponent(getUserId());
+  const response = await fetch(`/ChatBot/users/${userId}/history/name`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      oldConversationName: oldName,
+      newConversationName: newName
+    })
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "This saved chat could not be renamed.");
+  }
+}
 
 async function loadConversations() {
   const userId = encodeURIComponent(getUserId());
@@ -243,13 +243,41 @@ async function loadConversations() {
         <strong>${conversation.conversationName || "untitled-chat"}</strong>
         <span>${conversation.lastMessage || "No messages"}</span>
       </button>
-      <button type="button" class="conversation-delete" title="Delete chat">Delete</button>
+      <div class="conversation-actions">
+        <button type="button" class="conversation-rename" title="Rename chat">Rename</button>
+        <button type="button" class="conversation-delete" title="Delete chat">Delete</button>
+      </div>
     `;
 
     const openButton = item.querySelector(".conversation-open");
     openButton.addEventListener("click", () => {
       conversationNameInput.value = conversation.conversationName || "";
       loadHistory(conversation.conversationName || "");
+    });
+
+        const renameButton = item.querySelector(".conversation-rename");
+    renameButton.addEventListener("click", async () => {
+      const oldName = conversation.conversationName || "";
+      const newName = prompt("Rename this saved chat:", oldName)?.trim();
+
+      if (!oldName || !newName || newName === oldName) {
+        return;
+      }
+
+      if (savedConversationNames.has(newName.toLowerCase())) {
+        appendMessage("assistant", "That chat name already exists. Please choose a different name.", true);
+        return;
+      }
+
+      try {
+        await renameConversation(oldName, newName);
+        if (conversationNameInput.value.trim() === oldName) {
+          conversationNameInput.value = newName;
+        }
+        await loadConversations();
+      } catch (error) {
+        appendMessage("assistant", error.message, true);
+      }
     });
 
     const deleteButton = item.querySelector(".conversation-delete");
@@ -286,7 +314,7 @@ async function submitMessage(message) {
 
   try {
     const data = await sendChatMessage(message);
-    appendMessage("assistant", data.reply, false, data.sources || [], data.recommendationCriteria || "");
+    appendMessage("assistant", data.reply, false, data.sources || []);
     await loadConversations();
   } catch (error) {
     appendMessage("assistant", error.message, true);
@@ -449,7 +477,7 @@ function renderCars(cars) {
         <span>${car.category}</span>
       </div>
       <dl>
-        <div><dt>Price</dt><dd>${car.priceRangeWan} 萬</dd></div>
+        <div><dt>Price</dt><dd>${car.priceRangeWan} wan</dd></div>
         <div><dt>Seats</dt><dd>${car.seats}</dd></div>
         <div><dt>Fuel</dt><dd>${car.fuelType}</dd></div>
         <div><dt>Hybrid</dt><dd>${car.hasHybridOption ? "Yes" : "No"}</dd></div>
@@ -496,7 +524,9 @@ maxPriceFilter.addEventListener("input", () => {
   maxPriceFilter.searchTimeout = window.setTimeout(loadCars, 250);
 });
 
-visitorLabel.textContent = visitorId;
+visitorLabel.textContent = "Saved locally";
 loadConversations();
 loadLineupCount();
 loadCars();
+
+
