@@ -1,10 +1,10 @@
-﻿<!doctype html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Toyota Vehicle Advisor</title>
-  <link rel="stylesheet" href="styles.css?v=20260805-naming-fix">
+  <link rel="stylesheet" href="styles.css?v=20260806-bilingual">
 </head>
 <body>
   <main class="app-shell">
@@ -13,24 +13,30 @@
         <span class="brand-mark">T</span>
         <div>
           <h1>Toyota Vehicle Advisor</h1>
-          <p>Recommendation demo</p>
+          <p data-i18n="brandSubtitle">Toyota 車款推薦展示</p>
         </div>
       </div>
 
       <div class="sidebar-card">
         <div class="session-badge">
-          <span>Private browser session</span>
-          <strong id="visitorLabel">Ready</strong>
-        </div><input id="conversationName" type="hidden">
+          <span data-i18n="sessionLabel">私人瀏覽器工作階段</span>
+          <strong id="visitorLabel">已儲存在本機</strong>
+        </div>
+        <input id="conversationName" type="hidden">
 
-        <button id="newChatButton" class="secondary-button" type="button">New recommendation</button>
-        <button id="openDatabaseButton" class="outline-button" type="button">Open vehicle database</button>
+        <div class="language-toggle" aria-label="Language">
+          <button id="zhButton" class="language-button active" type="button">中文</button>
+          <button id="enButton" class="language-button" type="button">English</button>
+        </div>
+
+        <button id="newChatButton" class="secondary-button" type="button" data-i18n="newRecommendation">開始新的推薦</button>
+        <button id="openDatabaseButton" class="outline-button" type="button" data-i18n="openDatabase">開啟車款資料庫</button>
       </div>
 
       <section class="conversation-panel">
         <div class="panel-title">
-          <span>Saved chats</span>
-          <button id="refreshButton" class="icon-button" type="button" title="Refresh">Refresh</button>
+          <span data-i18n="savedChats">已儲存對話</span>
+          <button id="refreshButton" class="icon-button" type="button" title="重新整理" data-i18n="refresh">重新整理</button>
         </div>
         <div id="conversationList" class="conversation-list"></div>
       </section>
@@ -39,83 +45,83 @@
     <section class="chat-panel">
       <header class="chat-header">
         <div>
-          <div class="eyebrow">Toyota vehicle recommendation assistant</div>
-          <h2>Find the right Toyota for each customer</h2>
-          <p>Match customer needs to Toyota choices by budget, passengers, commute, family use, parking, fuel economy, and SUV preference.</p>
+          <div class="eyebrow" data-i18n="eyebrow">Toyota 車款推薦助手</div>
+          <h2 data-i18n="headline">幫每位客戶找到適合的 Toyota</h2>
+          <p data-i18n="subheadline">依照預算、乘坐人數、通勤、家庭用途、停車需求、省油需求與車型偏好，推薦合適車款。</p>
         </div>
         <a class="swagger-link" href="/swagger" target="_blank" rel="noreferrer">Swagger</a>
       </header>
 
       <section class="stats-strip" aria-label="Demo highlights">
         <div>
-          <span>Focus</span>
-          <strong>Toyota only</strong>
+          <span data-i18n="focusLabel">定位</span>
+          <strong data-i18n="focusValue">只推薦 Toyota</strong>
         </div>
         <div>
-          <span>Memory</span>
-          <strong>Vehicle data</strong>
+          <span data-i18n="memoryLabel">資料來源</span>
+          <strong data-i18n="memoryValue">車款資料庫</strong>
         </div>
         <div>
-          <span>Lineup</span>
-          <strong id="lineupCount">Loading</strong>
+          <span data-i18n="lineupLabel">車款數量</span>
+          <strong id="lineupCount">載入中</strong>
         </div>
       </section>
 
       <nav class="view-tabs" aria-label="Main views">
-        <button id="chatTab" class="tab-button active" type="button">Chat</button>
-        <button id="databaseTab" class="tab-button database-tab" type="button">Vehicle Database</button>
+        <button id="chatTab" class="tab-button active" type="button" data-i18n="chatTab">對話推薦</button>
+        <button id="databaseTab" class="tab-button database-tab" type="button" data-i18n="databaseTab">車款資料庫</button>
       </nav>
 
       <section id="chatView" class="chat-view">
         <div class="suggestions" aria-label="Example questions">
-          <button type="button" data-topic="budget-commute" data-example="I commute every day and want an affordable, fuel-saving Toyota. What would you recommend?">
-            <span>Budget commuter</span>
-            <small>Affordable and fuel-saving</small>
+          <button type="button" data-topic="budget-commute" data-example-zh="我每天通勤，想找一台平價又省油的 Toyota，你會推薦哪一台？" data-example-en="I commute every day and want an affordable, fuel-saving Toyota. What would you recommend?">
+            <span data-i18n="exampleBudgetTitle">通勤省油</span>
+            <small data-i18n="exampleBudgetText">平價、好開、省油</small>
           </button>
-          <button type="button" data-topic="family-suv" data-example="My family has two kids and we travel on weekends. Which Toyota would fit us best?">
-            <span>Family SUV</span>
-            <small>Space for kids and trips</small>
+          <button type="button" data-topic="family-suv" data-example-zh="我們家有兩個小孩，週末常出去玩，哪一台 Toyota 比較適合？" data-example-en="My family has two kids and we travel on weekends. Which Toyota would fit us best?">
+            <span data-i18n="exampleFamilyTitle">家庭休旅</span>
+            <small data-i18n="exampleFamilyText">適合小孩與出遊</small>
           </button>
-          <button type="button" data-topic="city-parking" data-example="I want a Toyota that is easy to park in the city but still comfortable. What should I look at?">
-            <span>City parking</span>
-            <small>Compact and practical</small>
+          <button type="button" data-topic="city-parking" data-example-zh="我主要在市區開車，希望好停車但也要舒適，有什麼 Toyota 推薦？" data-example-en="I want a Toyota that is easy to park in the city but still comfortable. What should I look at?">
+            <span data-i18n="exampleParkingTitle">市區好停</span>
+            <small data-i18n="exampleParkingText">小巧、實用、好停車</small>
           </button>
         </div>
 
         <div id="messages" class="messages">
           <article class="message assistant">
-            <p>Hello, I can help recommend Toyota models based on the customer's needs. I focus on Toyota choices, not other car brands.</p>
+            <p data-i18n="welcomeMessage">您好，我可以依照客戶需求推薦 Toyota 車款。我會專注在 Toyota，不推薦其他品牌。</p>
           </article>
         </div>
 
         <form id="chatForm" class="chat-form">
-          <textarea id="messageInput" placeholder="Ask a Toyota recommendation question..." rows="2" required></textarea>
-          <button id="sendButton" type="submit">Send</button>
+          <textarea id="messageInput" placeholder="請輸入 Toyota 車款推薦問題..." rows="2" required></textarea>
+          <button id="sendButton" type="submit" data-i18n="send">送出</button>
         </form>
       </section>
 
       <section id="databaseView" class="database-view" hidden>
         <div class="database-toolbar">
           <label class="field compact-field">
-            <span>Max price</span>
+            <span data-i18n="maxPrice">最高預算</span>
             <input id="maxPriceFilter" type="number" min="0" step="1" placeholder="100">
           </label>
-          <button id="allCarsButton" class="filter-button active" type="button">All</button>
+          <button id="allCarsButton" class="filter-button active" type="button" data-i18n="all">全部</button>
           <button id="suvFilterButton" class="filter-button" type="button">SUV</button>
           <button id="hybridFilterButton" class="filter-button" type="button">Hybrid</button>
-          <button id="refreshCarsButton" class="secondary-button" type="button">Refresh</button>
+          <button id="refreshCarsButton" class="secondary-button" type="button" data-i18n="refresh">重新整理</button>
         </div>
         <section class="comparison-panel" aria-label="Toyota comparison tool">
           <div class="comparison-controls">
             <label class="field compact-field">
-              <span>Compare</span>
+              <span data-i18n="compare">比較</span>
               <select id="compareFirst"></select>
             </label>
             <label class="field compact-field">
-              <span>With</span>
+              <span data-i18n="with">與</span>
               <select id="compareSecond"></select>
             </label>
-            <button id="compareButton" class="secondary-button" type="button">Compare</button>
+            <button id="compareButton" class="secondary-button" type="button" data-i18n="compare">比較</button>
           </div>
           <div id="comparisonResult" class="comparison-result"></div>
         </section>
@@ -124,7 +130,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260805-naming-fix"></script>
+  <script src="app.js?v=20260806-bilingual"></script>
 </body>
 </html>
-

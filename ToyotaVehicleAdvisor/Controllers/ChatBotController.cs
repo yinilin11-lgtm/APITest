@@ -67,6 +67,7 @@ namespace ToyotaVehicleAdvisor.Controllers
 
             var userId = NormalizeValue(request.UserId);
             var conversationName = NormalizeValue(request.ConversationName);
+            var language = NormalizeLanguage(request.Language);
             var conversationId = GetConversationId(request.ConversationId, userId, conversationName, request.StartNewConversation);
             var intent = DetectIntent(normalizedMessage);
 
@@ -74,7 +75,7 @@ namespace ToyotaVehicleAdvisor.Controllers
             {
                 var route = "toyota-database";
                 var sources = new List<SourceItem>();
-                var reply = CreateOutOfScopeReply();
+                var reply = CreateOutOfScopeReply(language);
                 var matchedCarCount = 0;
                 var recommendationCriteria = string.Empty;
 
@@ -89,19 +90,21 @@ namespace ToyotaVehicleAdvisor.Controllers
                         .ToList();
                     var databaseContext = ToyotaCarSearchService.BuildPromptContext(recommendation);
                     var databasePrompt = BuildSourcePrompt(
-                        "Use the backend recommendation criteria and Toyota vehicle database below before answering. Explain the recommendation by matching the customer's budget, family size, commute, parking, hybrid preference, and SUV preference when those needs are detected. For exact Toyota facts such as price, fuel type, seats, engine, horsepower, and fuel economy, only use the database records. If the database does not contain a needed detail, say that the database does not list it.",
+                        language == "zh"
+                            ? "請先使用下方後端推薦條件與 Toyota 車款資料庫，再回答使用者。請依照客戶的預算、乘坐人數、通勤、停車、油電、省油、SUV、跑車、商用、豪華或戶外需求來說明推薦理由。價格、動力、座位與車款資訊只能使用資料庫提供的內容；如果資料庫沒有列出，請明確說資料庫沒有提供。"
+                            : "Use the backend recommendation criteria and Toyota vehicle database below before answering. Explain the recommendation by matching the customer's budget, family size, commute, parking, hybrid preference, SUV preference, sports, commercial, premium, or outdoor needs when those needs are detected. For exact Toyota facts such as price, fuel type, seats, engine, horsepower, and fuel economy, only use the database records. If the database does not contain a needed detail, say that the database does not list it.",
                         "Toyota Taiwan database records",
                         normalizedMessage,
                         databaseContext);
 
                                         try
                     {
-                        reply = await CreateReply(conversationId, databasePrompt, normalizedMessage);
+                        reply = await CreateReply(conversationId, databasePrompt, normalizedMessage, language);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, "Gemini reply failed. Returning database fallback recommendation. TraceId: {TraceId}", HttpContext.TraceIdentifier);
-                        reply = CreateDatabaseFallbackReply(matchedCars);
+                        reply = CreateDatabaseFallbackReply(matchedCars, language);
                     }
                     recommendationCriteria = recommendation.Criteria.ToPromptText();
                 }
@@ -165,7 +168,7 @@ namespace ToyotaVehicleAdvisor.Controllers
                     question,
                     sourceContent);
                 var userMessage = $"請根據這個網址回答：{uri}\n問題：{question}";
-                var reply = await CreateReply(conversationId, prompt, userMessage);
+                var reply = await CreateReply(conversationId, prompt, userMessage, "zh");
 
                 return Ok(new ReadUrlResponse
                 {
@@ -219,7 +222,7 @@ namespace ToyotaVehicleAdvisor.Controllers
                     question,
                     searchContent);
                 var userMessage = $"請搜尋並回答：{query}\n問題：{question}";
-                var reply = await CreateReply(conversationId, prompt, userMessage);
+                var reply = await CreateReply(conversationId, prompt, userMessage, "zh");
 
                 return Ok(new SearchResponse
                 {
@@ -611,6 +614,11 @@ namespace ToyotaVehicleAdvisor.Controllers
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
+        private static string NormalizeLanguage(string? value)
+        {
+            return string.Equals(value?.Trim(), "en", StringComparison.OrdinalIgnoreCase) ? "en" : "zh";
+        }
+
         private static string DetectIntent(string message)
         {
             var lowerMessage = message.ToLowerInvariant();
@@ -762,7 +770,7 @@ namespace ToyotaVehicleAdvisor.Controllers
 
         private async Task<string> CreateReply(string conversationId, string message)
         {
-            return await CreateReply(conversationId, message, message);
+            return await CreateReply(conversationId, message, message, "zh");
         }
 
         private static bool IsAskingAboutNonToyotaBrand(string message)
@@ -771,15 +779,25 @@ namespace ToyotaVehicleAdvisor.Controllers
             return NonToyotaBrandKeywords.Any(lowerMessage.Contains);
         }
 
-        private static string CreateOutOfScopeReply()
+        private static string CreateOutOfScopeReply(string language)
         {
+            if (language == "zh")
+            {
+                return "我主要協助 Toyota 車款推薦，所以不分析或推薦其他品牌。你可以提供預算、用途、乘坐人數、停車需求與偏好的車型，我會幫你找適合的 Toyota。";
+            }
+
             return "I focus on Toyota vehicle recommendations, so I do not analyze or recommend other brands. Share the customer's budget, driving needs, passenger count, and preferred vehicle type, and I can suggest suitable Toyota options.";
         }
 
-        private static string CreateDatabaseFallbackReply(IReadOnlyList<Models.ToyotaCar> matchedCars)
+        private static string CreateDatabaseFallbackReply(IReadOnlyList<Models.ToyotaCar> matchedCars, string language)
         {
             if (matchedCars.Count == 0)
             {
+                if (language == "zh")
+                {
+                    return "目前 Toyota 資料庫還沒有找到合適車款。請提供預算、乘坐人數、主要用途、停車需求，以及是否偏好休旅或油電車。";
+                }
+
                 return "The Toyota database did not find a matching vehicle yet. Please share budget, passenger count, driving needs, parking needs, and whether you prefer SUV or hybrid.";
             }
 
@@ -793,10 +811,36 @@ namespace ToyotaVehicleAdvisor.Controllers
                 ? $" Other options to compare are {string.Join(", ", alternatives)}."
                 : string.Empty;
 
+            if (language == "zh")
+            {
+                var zhAlternativeText = alternatives.Count > 0
+                    ? $" 也可以一起比較 {string.Join("、", alternatives)}。"
+                    : string.Empty;
+
+                return $"根據 Toyota 車款資料庫，{topCar.Model} 是目前最符合的選擇。它是 {topCar.Category}，{topCar.Seats} 人座，動力為 {topCar.FuelType}，價格約 NT${topCar.StartingPriceWan:0.0}-{topCar.MaxPriceWan:0.0} 萬，適合：{topCar.BestFor}。{zhAlternativeText}";
+            }
+
             return $"Based on the Toyota vehicle database, {topCar.Model} is the strongest match. It is a {topCar.Category} with {topCar.Seats} seats, {topCar.FuelType}, and a listed price range of NT${topCar.StartingPriceWan:0.0}-{topCar.MaxPriceWan:0.0} wan. It fits: {topCar.BestFor}.{alternativeText}";
         }
 
-        private async Task<string> CreateReply(string conversationId, string promptMessage, string historyMessage)
+        private static string GetLanguageInstruction(string language)
+        {
+            return language == "zh"
+                ? "重要：請一律使用繁體中文回答，使用台灣客戶看得懂的自然口吻。車款名稱可以保留英文，例如 COROLLA CROSS、RAV4、GR86。"
+                : "Important: Reply in English only, even if the conversation history or user message contains Chinese.";
+        }
+
+        private static string GetSystemInstruction(string language)
+        {
+            if (language == "zh")
+            {
+                return "你是 Toyota 車款推薦助手，服務對象是台灣客戶，也是研究所申請作品展示的一部分。你的主要任務是幫客戶依照需求挑選合適的 Toyota 車款。請使用前文作為上下文，並一律用繁體中文回答。需要時可以追問預算、乘坐人數、通勤或高速需求、停車空間、省油需求、家庭用途、載貨需求，以及偏好轎車、掀背、休旅、MPV、油電或電動車。推薦時請根據資料庫車款與需求配對，例如通勤可考慮 ALTIS 或 VIOS，休旅可考慮 COROLLA CROSS、YARiS CROSS 或 RAV4，豪華接送可考慮 ALPHARD、CROWN 或 CAMRY，跑車可考慮 GR86、GR YARIS 或 GR SUPRA，商用可考慮 TOWN ACE 或 HILUX。不要捏造價格、促銷、庫存、貸款或官方規格；除非資料庫有提供，否則請說資料庫沒有列出。不要推薦或分析非 Toyota 品牌。如果使用者問題與 Toyota 購車、選車、用車、保養或汽車用途無關，請禮貌說明你主要協助 Toyota 車款推薦與汽車相關問題。回答保持簡短、親切、像銷售顧問，預設 1 到 3 句，不要分段。可以偶爾使用一個自然的表情符號，但不要過度使用。";
+            }
+
+            return "You are a Toyota vehicle recommendation assistant for a graduate school application demo. Your main job is to help customers choose suitable Toyota vehicles. Use previous messages as context. Always reply in English. Ask follow-up questions when needed, such as budget, number of passengers, city or highway driving, parking space, fuel efficiency, family use, cargo needs, and whether the customer prefers sedan, hatchback, SUV, MPV, hybrid, or electric. Recommend Toyota models by matching needs, for example Corolla Altis for practical commuting, Corolla Cross or RAV4 for SUV needs, Yaris Cross for compact city use, Camry for comfort, Alphard or Crown for premium comfort, GR86/GR Yaris/GR Supra for sports car needs, Town Ace or Hilux for commercial use, or Prius/Hybrid options for fuel economy. Do not invent exact prices, promotions, inventory, loan terms, or official specs unless they are provided by official data. Do not recommend or analyze non-Toyota brands. If the user's question is unrelated to Toyota vehicle buying, choosing, owning, maintaining, or using cars, politely say you mainly help with Toyota car recommendations and car-related questions. Keep replies short, simple, friendly, and sales-consultant-like. Use 1 to 3 short sentences by default. Reply as one paragraph without line breaks. You may occasionally add one simple emoji or emoticon when it feels natural, but do not overuse them.";
+        }
+
+        private async Task<string> CreateReply(string conversationId, string promptMessage, string historyMessage, string language)
         {
             var apiKey = GetGeminiApiKey();
             var model = GetGeminiModel();
@@ -805,7 +849,7 @@ namespace ToyotaVehicleAdvisor.Controllers
             var userMessage = new ChatMessage("user", historyMessage, DateTimeOffset.UtcNow);
             var promptUserMessage = new ChatMessage(
                 "user",
-                $"Important: Reply in English only, even if the conversation history or user message contains Chinese.\n\n{promptMessage}",
+                $"{GetLanguageInstruction(language)}\n\n{promptMessage}",
                 userMessage.CreatedAt);
             List<ChatMessage> snapshot;
 
@@ -826,7 +870,7 @@ namespace ToyotaVehicleAdvisor.Controllers
                     {
                         new Part
                         {
-                            Text = "You are a Toyota vehicle recommendation assistant for a graduate school application demo. Your main job is to help customers choose suitable Toyota vehicles. Use previous messages as context. Always reply in English. Ask follow-up questions when needed, such as budget, number of passengers, city or highway driving, parking space, fuel efficiency, family use, cargo needs, and whether the customer prefers sedan, hatchback, SUV, MPV, hybrid, or electric. Recommend Toyota models by matching needs, for example Corolla Altis for practical commuting, Corolla Cross or RAV4 for SUV needs, Yaris Cross for compact city use, Camry for comfort, Sienta for family space, or Prius/Hybrid options for fuel economy. Do not invent exact prices, promotions, inventory, loan terms, or official specs unless they are provided by official data. Do not recommend or analyze non-Toyota brands. If the user's question is unrelated to Toyota vehicle buying, choosing, owning, maintaining, or using cars, politely say you mainly help with Toyota car recommendations and car-related questions. Keep replies short, simple, friendly, and sales-consultant-like. Use 1 to 3 short sentences by default. Reply as one paragraph without line breaks. You may occasionally add one simple emoji or emoticon when it feels natural, but do not overuse them."
+                            Text = GetSystemInstruction(language)
                         }
                     }
                 }
@@ -1089,6 +1133,8 @@ namespace ToyotaVehicleAdvisor.Controllers
         public string? ConversationName { get; set; }
 
         public bool StartNewConversation { get; set; }
+
+        public string? Language { get; set; }
 
         public string Message { get; set; } = string.Empty;
     }

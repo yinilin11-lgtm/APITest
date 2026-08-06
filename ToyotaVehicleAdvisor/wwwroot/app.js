@@ -8,7 +8,7 @@ const messages = document.querySelector("#messages");
 const chatForm = document.querySelector("#chatForm");
 const messageInput = document.querySelector("#messageInput");
 const sendButton = document.querySelector("#sendButton");
-const exampleButtons = document.querySelectorAll("[data-example]");
+const exampleButtons = document.querySelectorAll("[data-topic]");
 const chatTab = document.querySelector("#chatTab");
 const databaseTab = document.querySelector("#databaseTab");
 const chatView = document.querySelector("#chatView");
@@ -24,12 +24,191 @@ const compareFirst = document.querySelector("#compareFirst");
 const compareSecond = document.querySelector("#compareSecond");
 const compareButton = document.querySelector("#compareButton");
 const comparisonResult = document.querySelector("#comparisonResult");
+const zhButton = document.querySelector("#zhButton");
+const enButton = document.querySelector("#enButton");
 
 let startNewConversation = false;
 let savedConversationNames = new Set();
 let activeCarFilter = "all";
 let allToyotaCars = [];
 const visitorId = getOrCreateVisitorId();
+let currentLanguage = window.localStorage.getItem("toyotaAdvisorLanguage") || "zh";
+
+const translations = {
+  zh: {
+    brandSubtitle: "Toyota 車款推薦展示",
+    sessionLabel: "私人瀏覽器工作階段",
+    savedLocally: "已儲存在本機",
+    newRecommendation: "開始新的推薦",
+    openDatabase: "開啟車款資料庫",
+    savedChats: "已儲存對話",
+    refresh: "重新整理",
+    eyebrow: "Toyota 車款推薦助手",
+    headline: "幫每位客戶找到適合的 Toyota",
+    subheadline: "依照預算、乘坐人數、通勤、家庭用途、停車需求、省油需求與車型偏好，推薦合適車款。",
+    focusLabel: "定位",
+    focusValue: "只推薦 Toyota",
+    memoryLabel: "資料來源",
+    memoryValue: "車款資料庫",
+    lineupLabel: "車款數量",
+    loading: "載入中",
+    records: "筆資料",
+    unavailable: "無法取得",
+    chatTab: "對話推薦",
+    databaseTab: "車款資料庫",
+    exampleBudgetTitle: "通勤省油",
+    exampleBudgetText: "平價、好開、省油",
+    exampleFamilyTitle: "家庭休旅",
+    exampleFamilyText: "適合小孩與出遊",
+    exampleParkingTitle: "市區好停",
+    exampleParkingText: "小巧、實用、好停車",
+    welcomeMessage: "您好，我可以依照客戶需求推薦 Toyota 車款。我會專注在 Toyota，不推薦其他品牌。",
+    messagePlaceholder: "請輸入 Toyota 車款推薦問題...",
+    send: "送出",
+    maxPrice: "最高預算",
+    all: "全部",
+    compare: "比較",
+    with: "與",
+    serviceWaking: "服務正在啟動或重新部署，請稍等一下再試一次。",
+    historyNotFound: "找不到這個已儲存對話。",
+    historyLoadFailed: "無法載入這個已儲存對話。",
+    deleteFailed: "無法刪除這個已儲存對話。",
+    renameFailed: "無法重新命名這個已儲存對話。",
+    conversationsFailed: "無法載入已儲存對話。",
+    noSavedChats: "目前沒有已儲存對話。",
+    untitledChat: "未命名對話",
+    noMessages: "沒有訊息",
+    rename: "重新命名",
+    delete: "刪除",
+    renamePrompt: "重新命名這個對話：",
+    duplicateName: "這個對話名稱已經存在，請換一個名稱。",
+    deleteConfirm: "要刪除「{name}」嗎？",
+    deletedMessage: "這個已儲存對話已刪除。準備好時可以開始新的 Toyota 推薦。",
+    newChatMessage: "新的 Toyota 推薦對話已開始。請告訴我客戶需求，我會自動命名這個對話。",
+    loadingCars: "正在載入 Toyota 車款資料...",
+    loadCarsFailed: "無法載入 Toyota 車款資料。",
+    chooseTwo: "請選擇兩台不同的 Toyota 車款。",
+    comparing: "正在比較 Toyota 車款...",
+    compareFailed: "無法比較這兩台 Toyota 車款。",
+    noCars: "沒有符合篩選條件的 Toyota 車款。",
+    factor: "比較項目",
+    price: "價格",
+    seats: "座位",
+    fuel: "動力",
+    hybrid: "油電",
+    yes: "是",
+    no: "否",
+    officialSource: "官方資料來源",
+    comparisonLabels: {
+      "Price": "價格",
+      "Fuel / Powertrain": "動力系統",
+      "Fuel Economy": "油耗",
+      "Interior / Seats": "座位 / 車型",
+      "Best Use": "適合用途",
+      "Safety / Source": "安全 / 資料來源"
+    }
+  },
+  en: {
+    brandSubtitle: "Recommendation demo",
+    sessionLabel: "Private browser session",
+    savedLocally: "Saved locally",
+    newRecommendation: "New recommendation",
+    openDatabase: "Open vehicle database",
+    savedChats: "Saved chats",
+    refresh: "Refresh",
+    eyebrow: "Toyota vehicle recommendation assistant",
+    headline: "Find the right Toyota for each customer",
+    subheadline: "Match customer needs to Toyota choices by budget, passengers, commute, family use, parking, fuel economy, and vehicle preference.",
+    focusLabel: "Focus",
+    focusValue: "Toyota only",
+    memoryLabel: "Memory",
+    memoryValue: "Vehicle data",
+    lineupLabel: "Lineup",
+    loading: "Loading",
+    records: "records",
+    unavailable: "Unavailable",
+    chatTab: "Chat",
+    databaseTab: "Vehicle Database",
+    exampleBudgetTitle: "Budget commuter",
+    exampleBudgetText: "Affordable and fuel-saving",
+    exampleFamilyTitle: "Family SUV",
+    exampleFamilyText: "Space for kids and trips",
+    exampleParkingTitle: "City parking",
+    exampleParkingText: "Compact and practical",
+    welcomeMessage: "Hello, I can help recommend Toyota models based on the customer's needs. I focus on Toyota choices, not other car brands.",
+    messagePlaceholder: "Ask a Toyota recommendation question...",
+    send: "Send",
+    maxPrice: "Max price",
+    all: "All",
+    compare: "Compare",
+    with: "With",
+    serviceWaking: "The service is waking up or redeploying. Please wait a moment and try again.",
+    historyNotFound: "This saved chat could not be found.",
+    historyLoadFailed: "This saved chat could not be loaded.",
+    deleteFailed: "This saved chat could not be deleted.",
+    renameFailed: "This saved chat could not be renamed.",
+    conversationsFailed: "Could not load saved chats.",
+    noSavedChats: "No saved chats yet.",
+    untitledChat: "untitled-chat",
+    noMessages: "No messages",
+    rename: "Rename",
+    delete: "Delete",
+    renamePrompt: "Rename this saved chat:",
+    duplicateName: "That chat name already exists. Please choose a different name.",
+    deleteConfirm: "Delete \"{name}\"?",
+    deletedMessage: "That saved chat was deleted. Start a new Toyota recommendation when you are ready.",
+    newChatMessage: "New Toyota recommendation chat started. Ask about the customer's needs, and I will name the chat automatically.",
+    loadingCars: "Loading Toyota database records...",
+    loadCarsFailed: "Could not load Toyota database records.",
+    chooseTwo: "Choose two different Toyota models.",
+    comparing: "Comparing Toyota models...",
+    compareFailed: "Could not compare these Toyota models.",
+    noCars: "No Toyota records match this filter.",
+    factor: "Factor",
+    price: "Price",
+    seats: "Seats",
+    fuel: "Fuel",
+    hybrid: "Hybrid",
+    yes: "Yes",
+    no: "No",
+    officialSource: "Official source",
+    comparisonLabels: {}
+  }
+};
+
+function t(key, replacements = {}) {
+  let value = translations[currentLanguage][key] || translations.en[key] || key;
+  for (const [name, replacement] of Object.entries(replacements)) {
+    value = value.replace(`{${name}}`, replacement);
+  }
+  return value;
+}
+
+function translateComparisonLabel(label) {
+  return translations[currentLanguage].comparisonLabels?.[label] || label;
+}
+
+function applyLanguage(language) {
+  currentLanguage = language;
+  window.localStorage.setItem("toyotaAdvisorLanguage", language);
+  document.documentElement.lang = language === "zh" ? "zh-Hant" : "en";
+  zhButton.classList.toggle("active", language === "zh");
+  enButton.classList.toggle("active", language === "en");
+
+  for (const element of document.querySelectorAll("[data-i18n]")) {
+    element.textContent = t(element.dataset.i18n);
+  }
+
+  messageInput.placeholder = t("messagePlaceholder");
+  visitorLabel.textContent = t("savedLocally");
+  if (allToyotaCars.length > 0) {
+    lineupCount.textContent = `${allToyotaCars.length} ${t("records")}`;
+  }
+  loadConversations();
+  if (!databaseView.hidden) {
+    loadCars();
+  }
+}
 
 function appendMessage(role, text, isError = false) {
   const article = document.createElement("article");
@@ -191,13 +370,14 @@ async function sendChatMessage(message) {
       userId: getUserId(),
       conversationName,
       startNewConversation,
+      language: currentLanguage,
       message
     })
   });
 
   const data = await readJsonResponse(
     response,
-    "The service is waking up or redeploying. Please wait a moment and try again."
+    t("serviceWaking")
   );
 
   startNewConversation = false;
@@ -213,11 +393,11 @@ async function loadHistory(conversationName) {
   const response = await fetch(`/ChatBot/users/${userId}/history?conversationName=${name}`);
 
   if (!response.ok) {
-    appendMessage("assistant", "This saved chat could not be found.", true);
+    appendMessage("assistant", t("historyNotFound"), true);
     return;
   }
 
-  const data = await readJsonResponse(response, "This saved chat could not be loaded.");
+  const data = await readJsonResponse(response, t("historyLoadFailed"));
   messages.innerHTML = "";
 
   for (const item of data.messages) {
@@ -233,7 +413,7 @@ async function deleteConversation(conversationName) {
   });
 
   if (!response.ok) {
-    await readJsonResponse(response, "This saved chat could not be deleted.");
+    await readJsonResponse(response, t("deleteFailed"));
   }
 }
 async function renameConversation(oldName, newName) {
@@ -249,7 +429,7 @@ async function renameConversation(oldName, newName) {
     })
   });
 
-  await readJsonResponse(response, "This saved chat could not be renamed.");
+  await readJsonResponse(response, t("renameFailed"));
 }
 
 async function loadConversations() {
@@ -258,11 +438,11 @@ async function loadConversations() {
 
   conversationList.innerHTML = "";
   if (!response.ok) {
-    conversationList.textContent = "Could not load saved chats.";
+    conversationList.textContent = t("conversationsFailed");
     return;
   }
 
-  const conversations = await readJsonResponse(response, "Could not load saved chats.");
+  const conversations = await readJsonResponse(response, t("conversationsFailed"));
   savedConversationNames = new Set(
     conversations
       .map((conversation) => conversation.conversationName || "")
@@ -272,7 +452,7 @@ async function loadConversations() {
   const savedChats = conversations.filter((conversation) => conversation.conversationName);
 
   if (savedChats.length === 0) {
-    conversationList.textContent = "No saved chats yet.";
+    conversationList.textContent = t("noSavedChats");
     return;
   }
 
@@ -281,12 +461,12 @@ async function loadConversations() {
     item.className = "conversation-item";
     item.innerHTML = `
       <button type="button" class="conversation-open">
-        <strong>${conversation.conversationName || "untitled-chat"}</strong>
-        <span>${conversation.lastMessage || "No messages"}</span>
+        <strong>${conversation.conversationName || t("untitledChat")}</strong>
+        <span>${conversation.lastMessage || t("noMessages")}</span>
       </button>
       <div class="conversation-actions">
-        <button type="button" class="conversation-rename" title="Rename chat">Rename</button>
-        <button type="button" class="conversation-delete" title="Delete chat">Delete</button>
+        <button type="button" class="conversation-rename" title="${t("rename")}">${t("rename")}</button>
+        <button type="button" class="conversation-delete" title="${t("delete")}">${t("delete")}</button>
       </div>
     `;
 
@@ -299,14 +479,14 @@ async function loadConversations() {
         const renameButton = item.querySelector(".conversation-rename");
     renameButton.addEventListener("click", async () => {
       const oldName = conversation.conversationName || "";
-      const newName = prompt("Rename this saved chat:", oldName)?.trim();
+      const newName = prompt(t("renamePrompt"), oldName)?.trim();
 
       if (!oldName || !newName || newName === oldName) {
         return;
       }
 
       if (savedConversationNames.has(newName.toLowerCase())) {
-        appendMessage("assistant", "That chat name already exists. Please choose a different name.", true);
+        appendMessage("assistant", t("duplicateName"), true);
         return;
       }
 
@@ -324,7 +504,7 @@ async function loadConversations() {
     const deleteButton = item.querySelector(".conversation-delete");
     deleteButton.addEventListener("click", async () => {
       const name = conversation.conversationName || "";
-      if (!name || !confirm(`Delete "${name}"?`)) {
+      if (!name || !confirm(t("deleteConfirm", { name }))) {
         return;
       }
 
@@ -332,7 +512,7 @@ async function loadConversations() {
         await deleteConversation(name);
         if (conversationNameInput.value.trim() === name) {
           messages.innerHTML = "";
-          appendMessage("assistant", "That saved chat was deleted. Start a new Toyota recommendation when you are ready.");
+          appendMessage("assistant", t("deletedMessage"));
         }
         await loadConversations();
       } catch (error) {
@@ -399,11 +579,11 @@ async function loadCars() {
     params.set("hybrid", "true");
   }
 
-  carsGrid.innerHTML = "<p class=\"empty-state\">Loading Toyota database records...</p>";
+  carsGrid.innerHTML = `<p class="empty-state">${t("loadingCars")}</p>`;
 
   try {
     const response = await fetch(`/ToyotaCars${params.toString() ? `?${params}` : ""}`);
-    const cars = await readJsonResponse(response, "Could not load Toyota database records.");
+    const cars = await readJsonResponse(response, t("loadCarsFailed"));
     renderCars(cars);
   } catch (error) {
     carsGrid.innerHTML = "";
@@ -417,12 +597,12 @@ async function loadCars() {
 async function loadLineupCount() {
   try {
     const response = await fetch("/ToyotaCars");
-    const cars = await readJsonResponse(response, "Lineup unavailable");
+    const cars = await readJsonResponse(response, t("unavailable"));
     allToyotaCars = cars;
-    lineupCount.textContent = `${cars.length} records`;
+    lineupCount.textContent = `${cars.length} ${t("records")}`;
     renderComparisonOptions(cars);
   } catch {
-    lineupCount.textContent = "Unavailable";
+    lineupCount.textContent = t("unavailable");
   }
 }
 
@@ -444,18 +624,18 @@ async function compareSelectedCars() {
   const second = compareSecond.value;
 
   if (!first || !second || first === second) {
-    comparisonResult.innerHTML = "<p class=\"empty-state error-text\">Choose two different Toyota models.</p>";
+    comparisonResult.innerHTML = `<p class="empty-state error-text">${t("chooseTwo")}</p>`;
     return;
   }
 
   const params = new URLSearchParams();
   params.append("models", first);
   params.append("models", second);
-  comparisonResult.innerHTML = "<p class=\"empty-state\">Comparing Toyota models...</p>";
+  comparisonResult.innerHTML = `<p class="empty-state">${t("comparing")}</p>`;
 
   try {
     const response = await fetch(`/ToyotaCars/compare?${params}`);
-    const comparison = await readJsonResponse(response, "Could not compare these Toyota models.");
+    const comparison = await readJsonResponse(response, t("compareFailed"));
     renderComparison(comparison);
   } catch (error) {
     comparisonResult.innerHTML = "";
@@ -469,7 +649,7 @@ async function compareSelectedCars() {
 function renderComparison(comparison) {
   const rows = comparison.rows.map((row) => `
     <tr>
-      <th>${row.label}</th>
+      <th>${translateComparisonLabel(row.label)}</th>
       <td>${row.first}</td>
       <td>${row.second}</td>
     </tr>
@@ -479,7 +659,7 @@ function renderComparison(comparison) {
     <table class="comparison-table">
       <thead>
         <tr>
-          <th>Factor</th>
+          <th>${t("factor")}</th>
           <th>${comparison.firstModel}</th>
           <th>${comparison.secondModel}</th>
         </tr>
@@ -493,7 +673,7 @@ function renderCars(cars) {
   carsGrid.innerHTML = "";
 
   if (cars.length === 0) {
-    carsGrid.innerHTML = "<p class=\"empty-state\">No Toyota records match this filter.</p>";
+    carsGrid.innerHTML = `<p class="empty-state">${t("noCars")}</p>`;
     return;
   }
 
@@ -506,13 +686,13 @@ function renderCars(cars) {
         <span>${car.category}</span>
       </div>
       <dl>
-        <div><dt>Price</dt><dd>${car.priceRangeWan} wan</dd></div>
-        <div><dt>Seats</dt><dd>${car.seats}</dd></div>
-        <div><dt>Fuel</dt><dd>${car.fuelType}</dd></div>
-        <div><dt>Hybrid</dt><dd>${car.hasHybridOption ? "Yes" : "No"}</dd></div>
+        <div><dt>${t("price")}</dt><dd>${car.priceRangeWan} ${currentLanguage === "zh" ? "萬" : "wan"}</dd></div>
+        <div><dt>${t("seats")}</dt><dd>${car.seats}</dd></div>
+        <div><dt>${t("fuel")}</dt><dd>${car.fuelType}</dd></div>
+        <div><dt>${t("hybrid")}</dt><dd>${car.hasHybridOption ? t("yes") : t("no")}</dd></div>
       </dl>
       <p>${car.bestFor}</p>
-      <a href="${car.sourceUrl}" target="_blank" rel="noreferrer">Official source</a>
+      <a href="${car.sourceUrl}" target="_blank" rel="noreferrer">${t("officialSource")}</a>
     `;
     carsGrid.append(article);
   }
@@ -526,7 +706,9 @@ chatForm.addEventListener("submit", async (event) => {
 for (const button of exampleButtons) {
   button.addEventListener("click", () => {
     conversationNameInput.value = createUniqueName(button.dataset.topic || "shopping-advice");
-    messageInput.value = button.dataset.example || "";
+    messageInput.value = currentLanguage === "zh"
+      ? button.dataset.exampleZh || ""
+      : button.dataset.exampleEn || "";
     messageInput.focus();
   });
 }
@@ -535,7 +717,7 @@ newChatButton.addEventListener("click", () => {
   startNewConversation = true;
   conversationNameInput.value = "";
   messages.innerHTML = "";
-  appendMessage("assistant", "New Toyota recommendation chat started. Ask about the customer's needs, and I will name the chat automatically.");
+  appendMessage("assistant", t("newChatMessage"));
   messageInput.focus();
 });
 openDatabaseButton.addEventListener("click", () => setActiveView("database"));
@@ -548,13 +730,14 @@ suvFilterButton.addEventListener("click", () => setActiveCarFilter("suv"));
 hybridFilterButton.addEventListener("click", () => setActiveCarFilter("hybrid"));
 refreshCarsButton.addEventListener("click", loadCars);
 compareButton.addEventListener("click", compareSelectedCars);
+zhButton.addEventListener("click", () => applyLanguage("zh"));
+enButton.addEventListener("click", () => applyLanguage("en"));
 maxPriceFilter.addEventListener("input", () => {
   window.clearTimeout(maxPriceFilter.searchTimeout);
   maxPriceFilter.searchTimeout = window.setTimeout(loadCars, 250);
 });
 
-visitorLabel.textContent = "Saved locally";
-loadConversations();
+applyLanguage(currentLanguage);
 loadLineupCount();
 loadCars();
 

@@ -152,6 +152,31 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.language-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f8fa;
+}
+
+.language-button {
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.language-button.active {
+  color: white;
+  background: var(--dark);
+}
+
 .secondary-button {
   border: 0;
   border-radius: 8px;
