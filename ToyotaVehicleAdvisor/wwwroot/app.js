@@ -1,7 +1,5 @@
 ﻿const visitorLabel = document.querySelector("#visitorLabel");
 const conversationNameInput = document.querySelector("#conversationName");
-const newChatButton = document.querySelector("#newChatButton");
-const openDatabaseButton = document.querySelector("#openDatabaseButton");
 const refreshButton = document.querySelector("#refreshButton");
 const conversationList = document.querySelector("#conversationList");
 const messages = document.querySelector("#messages");
@@ -39,8 +37,6 @@ const translations = {
     brandSubtitle: "Toyota 車款推薦展示",
     sessionLabel: "私人瀏覽器工作階段",
     savedLocally: "已儲存在本機",
-    newChat: "點我諮詢",
-    openDatabase: "開啟車款資料庫",
     savedChats: "已儲存對話",
     refresh: "重新整理",
     eyebrow: "Toyota 車款推薦助手",
@@ -112,8 +108,6 @@ const translations = {
     brandSubtitle: "Recommendation demo",
     sessionLabel: "Private browser session",
     savedLocally: "Saved locally",
-    newChat: "Start consultation",
-    openDatabase: "Open vehicle database",
     savedChats: "Saved chats",
     refresh: "Refresh",
     eyebrow: "Toyota vehicle recommendation assistant",
@@ -712,15 +706,6 @@ for (const button of exampleButtons) {
     messageInput.focus();
   });
 }
-
-newChatButton.addEventListener("click", () => {
-  startNewConversation = true;
-  conversationNameInput.value = "";
-  messages.innerHTML = "";
-  appendMessage("assistant", t("newChatMessage"));
-  messageInput.focus();
-});
-openDatabaseButton.addEventListener("click", () => setActiveView("database"));
 
 refreshButton.addEventListener("click", loadConversations);
 chatTab.addEventListener("click", () => setActiveView("chat"));
