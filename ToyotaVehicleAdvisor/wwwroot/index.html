@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Toyota Vehicle Advisor</title>
-  <link rel="stylesheet" href="styles.css?v=20260806-bilingual">
+  <link rel="stylesheet" href="styles.css?v=20260807-sidebar-nav">
 </head>
 <body>
   <main class="app-shell">
@@ -28,6 +28,9 @@
           <button id="zhButton" class="language-button active" type="button">中文</button>
           <button id="enButton" class="language-button" type="button">English</button>
         </div>
+
+        <button id="newChatButton" class="secondary-button" type="button" data-i18n="newChat">點我諮詢</button>
+        <button id="openDatabaseButton" class="outline-button" type="button" data-i18n="openDatabase">開啟車款資料庫</button>
       </div>
 
       <section class="conversation-panel">
@@ -63,11 +66,6 @@
           <strong id="lineupCount">載入中</strong>
         </div>
       </section>
-
-      <nav class="view-tabs" aria-label="Main views">
-        <button id="chatTab" class="tab-button active" type="button" data-i18n="chatTab">對話推薦</button>
-        <button id="databaseTab" class="tab-button database-tab" type="button" data-i18n="databaseTab">車款資料庫</button>
-      </nav>
 
       <section id="chatView" class="chat-view">
         <div class="suggestions" aria-label="Example questions">
@@ -127,6 +125,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260806-bilingual"></script>
+  <script src="app.js?v=20260807-sidebar-nav"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 ﻿const visitorLabel = document.querySelector("#visitorLabel");
 const conversationNameInput = document.querySelector("#conversationName");
+const newChatButton = document.querySelector("#newChatButton");
+const openDatabaseButton = document.querySelector("#openDatabaseButton");
 const refreshButton = document.querySelector("#refreshButton");
 const conversationList = document.querySelector("#conversationList");
 const messages = document.querySelector("#messages");
@@ -7,8 +9,6 @@ const chatForm = document.querySelector("#chatForm");
 const messageInput = document.querySelector("#messageInput");
 const sendButton = document.querySelector("#sendButton");
 const exampleButtons = document.querySelectorAll("[data-topic]");
-const chatTab = document.querySelector("#chatTab");
-const databaseTab = document.querySelector("#databaseTab");
 const chatView = document.querySelector("#chatView");
 const databaseView = document.querySelector("#databaseView");
 const lineupCount = document.querySelector("#lineupCount");
@@ -37,6 +37,8 @@ const translations = {
     brandSubtitle: "Toyota 車款推薦展示",
     sessionLabel: "私人瀏覽器工作階段",
     savedLocally: "已儲存在本機",
+    newChat: "點我諮詢",
+    openDatabase: "開啟車款資料庫",
     savedChats: "已儲存對話",
     refresh: "重新整理",
     eyebrow: "Toyota 車款推薦助手",
@@ -50,8 +52,6 @@ const translations = {
     loading: "載入中",
     records: "筆資料",
     unavailable: "無法取得",
-    chatTab: "對話推薦",
-    databaseTab: "車款資料庫",
     exampleBudgetTitle: "通勤省油",
     exampleBudgetText: "平價、好開、省油",
     exampleFamilyTitle: "家庭休旅",
@@ -108,6 +108,8 @@ const translations = {
     brandSubtitle: "Recommendation demo",
     sessionLabel: "Private browser session",
     savedLocally: "Saved locally",
+    newChat: "Start consultation",
+    openDatabase: "Open vehicle database",
     savedChats: "Saved chats",
     refresh: "Refresh",
     eyebrow: "Toyota vehicle recommendation assistant",
@@ -121,8 +123,6 @@ const translations = {
     loading: "Loading",
     records: "records",
     unavailable: "Unavailable",
-    chatTab: "Chat",
-    databaseTab: "Vehicle Database",
     exampleBudgetTitle: "Budget commuter",
     exampleBudgetText: "Affordable and fuel-saving",
     exampleFamilyTitle: "Family SUV",
@@ -543,8 +543,6 @@ function setActiveView(view) {
   const isChat = view === "chat";
   chatView.hidden = !isChat;
   databaseView.hidden = isChat;
-  chatTab.classList.toggle("active", isChat);
-  databaseTab.classList.toggle("active", !isChat);
 
   if (!isChat) {
     loadCars();
@@ -708,8 +706,15 @@ for (const button of exampleButtons) {
 }
 
 refreshButton.addEventListener("click", loadConversations);
-chatTab.addEventListener("click", () => setActiveView("chat"));
-databaseTab.addEventListener("click", () => setActiveView("database"));
+newChatButton.addEventListener("click", () => {
+  setActiveView("chat");
+  startNewConversation = true;
+  conversationNameInput.value = "";
+  messages.innerHTML = "";
+  appendMessage("assistant", t("newChatMessage"));
+  messageInput.focus();
+});
+openDatabaseButton.addEventListener("click", () => setActiveView("database"));
 allCarsButton.addEventListener("click", () => setActiveCarFilter("all"));
 suvFilterButton.addEventListener("click", () => setActiveCarFilter("suv"));
 hybridFilterButton.addEventListener("click", () => setActiveCarFilter("hybrid"));
