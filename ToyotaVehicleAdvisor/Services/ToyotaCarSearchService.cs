@@ -16,6 +16,17 @@ namespace ToyotaVehicleAdvisor.Services
             var criteria = ToyotaRecommendationCriteria.FromMessage(message);
             var allCars = await db.ToyotaCars.AsNoTracking().ToListAsync();
 
+            if (criteria.WantsHighestPrice is true)
+            {
+                var premiumCars = allCars
+                    .OrderByDescending(car => car.MaxPriceWan)
+                    .ThenByDescending(car => car.StartingPriceWan)
+                    .Take(5)
+                    .ToList();
+
+                return new ToyotaRecommendationResult(criteria, premiumCars);
+            }
+
             var rankedCars = allCars
                 .Select(car => new RankedToyotaCar(car, ScoreCar(car, criteria)))
                 .Where(item => item.Score > 0)
@@ -173,6 +184,8 @@ namespace ToyotaVehicleAdvisor.Services
 
             public bool? NeedsOutdoorUse { get; init; }
 
+            public bool? WantsHighestPrice { get; init; }
+
             public static ToyotaRecommendationCriteria FromMessage(string message)
             {
                 var lower = message.ToLowerInvariant();
@@ -189,8 +202,9 @@ namespace ToyotaVehicleAdvisor.Services
                     NeedsFamilyUse = familySize >= 3 || ContainsAny(lower, "family", "kids", "children", "child", "baby", "weekend trip", "travel", "小孩", "孩子", "兒童", "寶寶", "家庭", "家人", "親子", "接小孩", "載小孩"),
                     WantsSportsCar = ContainsAny(lower, "sports car", "sporty", "performance", "coupe", "fun to drive", "gr86", "supra", "gr yaris", "gr ", "track", "跑車", "性能", "雙門", "熱血", "駕駛樂趣", "開快", "帥", "操控", "賽道", "甩尾"),
                     NeedsCommercialUse = ContainsAny(lower, "truck", "van", "cargo", "delivery", "business", "commercial", "貨車", "廂型車", "貨卡", "載貨", "送貨", "做生意", "公司用", "商用", "工具車"),
-                    WantsPremiumComfort = ContainsAny(lower, "luxury", "premium", "executive", "chauffeur", "vip", "comfortable", "高級", "豪華", "商務", "老闆", "接送", "主管", "貴賓", "舒適"),
-                    NeedsOutdoorUse = ContainsAny(lower, "camping", "outdoor", "road trip", "long distance", "off-road", "露營", "戶外", "長途", "爬山", "旅行", "旅遊", "出遊", "越野")
+                    WantsPremiumComfort = ContainsAny(lower, "luxury", "premium", "executive", "chauffeur", "vip", "comfortable", "expensive", "most expensive", "highest price", "top price", "高級", "豪華", "商務", "老闆", "接送", "主管", "貴賓", "舒適", "貴", "最貴", "最高價", "價格最高", "預算高"),
+                    NeedsOutdoorUse = ContainsAny(lower, "camping", "outdoor", "road trip", "long distance", "off-road", "露營", "戶外", "長途", "爬山", "旅行", "旅遊", "出遊", "越野"),
+                    WantsHighestPrice = ContainsAny(lower, "most expensive", "highest price", "top price", "highest-priced", "pricey", "最貴", "最高價", "價格最高", "售價最高", "最豪華", "預算最高")
                 };
             }
 
@@ -207,7 +221,8 @@ namespace ToyotaVehicleAdvisor.Services
                     $"- Sport / performance preference: {FormatCriteria(WantsSportsCar)}",
                     $"- Commercial / cargo use: {FormatCriteria(NeedsCommercialUse)}",
                     $"- Premium comfort preference: {FormatCriteria(WantsPremiumComfort)}",
-                    $"- Outdoor / long-distance use: {FormatCriteria(NeedsOutdoorUse)}"
+                    $"- Outdoor / long-distance use: {FormatCriteria(NeedsOutdoorUse)}",
+                    $"- Highest-price request: {FormatCriteria(WantsHighestPrice)}"
                 ]);
             }
 
