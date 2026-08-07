@@ -83,8 +83,7 @@ namespace ToyotaVehicleAdvisor.Services
                     .Take(8)
                     .ToList(),
                 ToyotaQueryIntent.SportsCar => allCars
-                    .Where(car => car.Category.Contains("Sports", StringComparison.OrdinalIgnoreCase) ||
-                        car.Model.Contains("GR", StringComparison.OrdinalIgnoreCase))
+                    .Where(IsPerformanceCar)
                     .OrderBy(car => car.StartingPriceWan)
                     .Take(8)
                     .ToList(),
@@ -178,8 +177,7 @@ namespace ToyotaVehicleAdvisor.Services
 
             if (criteria.WantsSportsCar is true)
             {
-                score += car.Category.Contains("Sports", StringComparison.OrdinalIgnoreCase) ||
-                    car.Model.Contains("GR", StringComparison.OrdinalIgnoreCase) ||
+                score += IsPerformanceCar(car) ||
                     car.BestFor.Contains("performance", StringComparison.OrdinalIgnoreCase) ||
                     car.BestFor.Contains("driving enjoyment", StringComparison.OrdinalIgnoreCase) ? 12 : -6;
             }
@@ -211,6 +209,14 @@ namespace ToyotaVehicleAdvisor.Services
             }
 
             return score;
+        }
+
+        private static bool IsPerformanceCar(ToyotaCar car)
+        {
+            return car.Category.Contains("Sports", StringComparison.OrdinalIgnoreCase) ||
+                car.Model.Equals("GR86", StringComparison.OrdinalIgnoreCase) ||
+                car.Model.Equals("GR YARIS", StringComparison.OrdinalIgnoreCase) ||
+                car.Model.Equals("GR SUPRA", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string FormatValue<T>(T? value)
