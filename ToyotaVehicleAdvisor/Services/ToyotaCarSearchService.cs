@@ -16,15 +16,10 @@ namespace ToyotaVehicleAdvisor.Services
             var criteria = ToyotaRecommendationCriteria.FromMessage(message);
             var allCars = await db.ToyotaCars.AsNoTracking().ToListAsync();
 
-            if (criteria.WantsHighestPrice is true)
+            var queryCars = ApplyDirectQuery(allCars, criteria);
+            if (queryCars is not null)
             {
-                var premiumCars = allCars
-                    .OrderByDescending(car => car.MaxPriceWan)
-                    .ThenByDescending(car => car.StartingPriceWan)
-                    .Take(5)
-                    .ToList();
-
-                return new ToyotaRecommendationResult(criteria, premiumCars);
+                return new ToyotaRecommendationResult(criteria, queryCars);
             }
 
             var rankedCars = allCars
@@ -45,6 +40,73 @@ namespace ToyotaVehicleAdvisor.Services
             }
 
             return new ToyotaRecommendationResult(criteria, rankedCars);
+        }
+
+        private static List<ToyotaCar>? ApplyDirectQuery(List<ToyotaCar> allCars, ToyotaRecommendationCriteria criteria)
+        {
+            return criteria.QueryIntent switch
+            {
+                ToyotaQueryIntent.HighestPrice => allCars
+                    .OrderByDescending(car => car.MaxPriceWan)
+                    .ThenByDescending(car => car.StartingPriceWan)
+                    .Take(5)
+                    .ToList(),
+                ToyotaQueryIntent.LowestPrice => allCars
+                    .OrderBy(car => car.StartingPriceWan)
+                    .ThenBy(car => car.MaxPriceWan)
+                    .Take(5)
+                    .ToList(),
+                ToyotaQueryIntent.BudgetUnder when criteria.BudgetWan is not null => allCars
+                    .Where(car => car.StartingPriceWan <= criteria.BudgetWan.Value)
+                    .OrderByDescending(car => car.StartingPriceWan)
+                    .ThenBy(car => car.Model)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.SevenSeats => allCars
+                    .Where(car => car.Seats >= 7)
+                    .OrderBy(car => car.StartingPriceWan)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.Hybrid => allCars
+                    .Where(car => car.HasHybridOption)
+                    .OrderBy(car => car.StartingPriceWan)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.Electric => allCars
+                    .Where(car => car.IsElectric)
+                    .OrderBy(car => car.StartingPriceWan)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.Suv => allCars
+                    .Where(car => car.IsSuv)
+                    .OrderBy(car => car.StartingPriceWan)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.SportsCar => allCars
+                    .Where(car => car.Category.Contains("Sports", StringComparison.OrdinalIgnoreCase) ||
+                        car.Model.Contains("GR", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(car => car.StartingPriceWan)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.Commercial => allCars
+                    .Where(car => car.Category.Contains("Commercial", StringComparison.OrdinalIgnoreCase) ||
+                        car.Category.Contains("Pickup", StringComparison.OrdinalIgnoreCase) ||
+                        car.Model.Contains("TOWN ACE", StringComparison.OrdinalIgnoreCase) ||
+                        car.Model.Contains("HILUX", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(car => car.StartingPriceWan)
+                    .Take(8)
+                    .ToList(),
+                ToyotaQueryIntent.PremiumComfort => allCars
+                    .Where(car => car.Category.Contains("Luxury", StringComparison.OrdinalIgnoreCase) ||
+                        car.Category.Contains("Crossover Sedan", StringComparison.OrdinalIgnoreCase) ||
+                        car.Model.Contains("ALPHARD", StringComparison.OrdinalIgnoreCase) ||
+                        car.Model.Contains("CROWN", StringComparison.OrdinalIgnoreCase) ||
+                        car.Model.Contains("CAMRY", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(car => car.MaxPriceWan)
+                    .Take(8)
+                    .ToList(),
+                _ => null
+            };
         }
 
         public static string BuildPromptContext(ToyotaRecommendationResult result)
@@ -160,8 +222,25 @@ namespace ToyotaVehicleAdvisor.Services
 
         public record ToyotaRecommendationResult(ToyotaRecommendationCriteria Criteria, List<ToyotaCar> Cars);
 
+        public enum ToyotaQueryIntent
+        {
+            Recommendation,
+            HighestPrice,
+            LowestPrice,
+            BudgetUnder,
+            SevenSeats,
+            Hybrid,
+            Electric,
+            Suv,
+            SportsCar,
+            Commercial,
+            PremiumComfort
+        }
+
         public class ToyotaRecommendationCriteria
         {
+            public ToyotaQueryIntent QueryIntent { get; init; }
+
             public decimal? BudgetWan { get; init; }
 
             public int? FamilySize { get; init; }
@@ -190,10 +269,12 @@ namespace ToyotaVehicleAdvisor.Services
             {
                 var lower = message.ToLowerInvariant();
                 var familySize = TryExtractPassengerCount(message);
+                var budgetWan = TryExtractBudgetWan(message);
 
                 return new ToyotaRecommendationCriteria
                 {
-                    BudgetWan = TryExtractBudgetWan(message),
+                    QueryIntent = DetectQueryIntent(lower, budgetWan, familySize),
+                    BudgetWan = budgetWan,
                     FamilySize = familySize,
                     IsDailyCommute = ContainsAny(lower, "commute", "daily", "work", "office", "city driving", "通勤", "上班", "上課", "每天", "代步", "日常", "買菜", "短程", "平常開"),
                     NeedsEasyParking = ContainsAny(lower, "parking", "park", "easy to park", "compact", "city", "停車", "好停", "市區", "城市", "小台", "小車", "新手", "第一台車", "巷子", "窄路"),
@@ -211,6 +292,7 @@ namespace ToyotaVehicleAdvisor.Services
             public string ToPromptText()
             {
                 return string.Join(Environment.NewLine, [
+                    $"- Query type: {QueryIntent}",
                     $"- Budget: {FormatCriteria(BudgetWan, value => $"NT${value:0.#} wan")}",
                     $"- Family size / passengers: {FormatCriteria(FamilySize, value => $"{value} people")}",
                     $"- Daily commute: {FormatCriteria(IsDailyCommute)}",
@@ -232,6 +314,66 @@ namespace ToyotaVehicleAdvisor.Services
                 return match.Success && decimal.TryParse(match.Groups["amount"].Value, out var amount)
                     ? amount
                     : null;
+            }
+
+            private static ToyotaQueryIntent DetectQueryIntent(string lower, decimal? budgetWan, int? familySize)
+            {
+                if (ContainsAny(lower, "most expensive", "highest price", "top price", "highest-priced", "pricey", "最貴", "最高價", "價格最高", "售價最高", "最豪華", "預算最高"))
+                {
+                    return ToyotaQueryIntent.HighestPrice;
+                }
+
+                if (ContainsAny(lower, "cheapest", "lowest price", "least expensive", "entry-level", "最便宜", "最低價", "價格最低", "入門", "平價排行"))
+                {
+                    return ToyotaQueryIntent.LowestPrice;
+                }
+
+                if (budgetWan is not null && ContainsAny(lower, "under", "below", "less than", "within", "afford", "buy", "which", "what", "list", "以內", "以下", "不超過", "低於", "能買", "可以買", "有哪些", "有什麼", "哪幾台"))
+                {
+                    return ToyotaQueryIntent.BudgetUnder;
+                }
+
+                if (familySize >= 7 || ContainsAny(lower, "7 seats", "seven seats", "7-seater", "seven-seater", "七人座", "7人座", "七個人", "七位", "七人"))
+                {
+                    return ToyotaQueryIntent.SevenSeats;
+                }
+
+                if (ContainsAny(lower, "electric", "ev", "battery", "電動", "純電") &&
+                    ContainsAny(lower, "有哪些", "which", "what", "list", "有什麼", "哪幾台", "車款"))
+                {
+                    return ToyotaQueryIntent.Electric;
+                }
+
+                if (ContainsAny(lower, "hybrid", "phev", "fuel-saving", "油電", "插電", "省油") &&
+                    ContainsAny(lower, "有哪些", "which", "what", "list", "有什麼", "哪幾台", "車款"))
+                {
+                    return ToyotaQueryIntent.Hybrid;
+                }
+
+                if (ContainsAny(lower, "suv", "crossover", "休旅", "休旅車") &&
+                    ContainsAny(lower, "有哪些", "which", "what", "list", "有什麼", "哪幾台", "車款"))
+                {
+                    return ToyotaQueryIntent.Suv;
+                }
+
+                if (ContainsAny(lower, "sports car", "sporty", "performance", "coupe", "gr86", "supra", "gr yaris", "跑車", "性能", "雙門", "gr ") &&
+                    ContainsAny(lower, "有哪些", "which", "what", "list", "有什麼", "哪幾台", "車款", "推薦"))
+                {
+                    return ToyotaQueryIntent.SportsCar;
+                }
+
+                if (ContainsAny(lower, "truck", "van", "cargo", "delivery", "business", "commercial", "貨車", "廂型車", "貨卡", "載貨", "送貨", "商用", "公司用"))
+                {
+                    return ToyotaQueryIntent.Commercial;
+                }
+
+                if (ContainsAny(lower, "luxury", "premium", "executive", "chauffeur", "vip", "豪華", "商務", "老闆", "接送", "貴賓") &&
+                    ContainsAny(lower, "有哪些", "which", "what", "list", "有什麼", "哪幾台", "車款", "推薦"))
+                {
+                    return ToyotaQueryIntent.PremiumComfort;
+                }
+
+                return ToyotaQueryIntent.Recommendation;
             }
 
             private static int? TryExtractPassengerCount(string message)

@@ -91,8 +91,8 @@ namespace ToyotaVehicleAdvisor.Controllers
                     var databaseContext = ToyotaCarSearchService.BuildPromptContext(recommendation);
                     var databasePrompt = BuildSourcePrompt(
                         language == "zh"
-                            ? "請先使用下方後端推薦條件與 Toyota 車款資料庫，再回答使用者。請依照客戶的預算、乘坐人數、通勤、停車、油電、省油、SUV、跑車、商用、豪華或戶外需求來說明推薦理由。價格、動力、座位與車款資訊只能使用資料庫提供的內容；如果資料庫沒有列出，請明確說資料庫沒有提供。"
-                            : "Use the backend recommendation criteria and Toyota vehicle database below before answering. Explain the recommendation by matching the customer's budget, family size, commute, parking, hybrid preference, SUV preference, sports, commercial, premium, or outdoor needs when those needs are detected. For exact Toyota facts such as price, fuel type, seats, engine, horsepower, and fuel economy, only use the database records. If the database does not contain a needed detail, say that the database does not list it.",
+                            ? "請先使用下方後端判斷出的 query type、推薦條件與 Toyota 車款資料庫，再回答使用者。如果 query type 不是 Recommendation，請把它當成資料庫排序或篩選結果來回答，例如最貴、最便宜、預算以下、七人座、油電、電動、SUV、跑車、商用或豪華車款清單。價格、動力、座位與車款資訊只能使用資料庫提供的內容；如果資料庫沒有列出，請明確說資料庫沒有提供。"
+                            : "Use the backend query type, recommendation criteria, and Toyota vehicle database below before answering. If the query type is not Recommendation, treat the matched vehicles as a database sort/filter result, such as highest price, lowest price, under budget, seven seats, hybrid, electric, SUV, sports car, commercial, or premium vehicles. For exact Toyota facts such as price, fuel type, seats, engine, horsepower, and fuel economy, only use the database records. If the database does not contain a needed detail, say that the database does not list it.",
                         "Toyota Taiwan database records",
                         normalizedMessage,
                         databaseContext);
@@ -799,6 +799,20 @@ namespace ToyotaVehicleAdvisor.Controllers
                 }
 
                 return "The Toyota database did not find a matching vehicle yet. Please share budget, passenger count, driving needs, parking needs, and whether you prefer SUV or hybrid.";
+            }
+
+            if (matchedCars.Count > 1)
+            {
+                var listedCars = matchedCars
+                    .Take(5)
+                    .Select(car => language == "zh"
+                        ? $"{car.Model}（NT${car.StartingPriceWan:0.0}-{car.MaxPriceWan:0.0} 萬，{car.Seats} 人座，{car.FuelType}）"
+                        : $"{car.Model} (NT${car.StartingPriceWan:0.0}-{car.MaxPriceWan:0.0} wan, {car.Seats} seats, {car.FuelType})")
+                    .ToList();
+
+                return language == "zh"
+                    ? $"根據 Toyota 車款資料庫，符合條件的車款包含：{string.Join("、", listedCars)}。你可以再告訴我預算、用途或偏好的車型，我可以幫你縮小選擇。"
+                    : $"Based on the Toyota vehicle database, matching vehicles include: {string.Join(", ", listedCars)}. Share budget, use case, or preferred body style and I can narrow the options.";
             }
 
             var topCar = matchedCars[0];
